@@ -1,1 +1,1 @@
-# OOP-Project---MathPuzzle
+# MathPuzzle_OOPProject
