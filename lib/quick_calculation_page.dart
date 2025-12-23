@@ -3,85 +3,50 @@ import 'package:flutter/material.dart';
 import 'games/quick_calculation_game.dart';
 import 'core/app_theme.dart';
 
-class QuickCalculationPage extends StatelessWidget {
+class QuickCalculationPage extends StatefulWidget {
+  final int level;
+  QuickCalculationPage({this.level = 1});
+
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppTheme.backgroundColor,
-      appBar: AppBar(
-        title: Text('Quick Calculation'),
-        iconTheme: IconThemeData(color: Colors.black87),
-      ),
-      body: Center(
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Wrap(
-                spacing: 16,
-                runSpacing: 16,
-                alignment: WrapAlignment.center,
-                children: [
-                  OpButton(op: 1, text: '+', color: Colors.blueAccent),
-                  OpButton(op: 2, text: '-', color: Colors.redAccent),
-                  OpButton(op: 3, text: '*', color: Colors.orangeAccent),
-                  OpButton(op: 4, text: '/', color: Colors.greenAccent),
-                  OpButton(op: 5, text: 'Mix', color: Colors.purpleAccent),
-                ],
-              ),
-              SizedBox(height: 40),
-              ElevatedButton.icon(
-                icon: Icon(Icons.arrow_back),
-                label: Text('Back to Main Menu'),
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.grey),
-                onPressed: () => Navigator.pop(context),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
+  _QuickCalculationPageState createState() => _QuickCalculationPageState();
 }
 
-class OpButton extends StatelessWidget {
-  final int op;
-  final String text;
-  final Color color;
-
-  OpButton({required this.op, required this.text, required this.color});
+class _QuickCalculationPageState extends State<QuickCalculationPage> {
+  // Determine mode based on level
+  // 1-5: Add (mode 1)
+  // 6-10: Sub (mode 2)
+  // 11-15: Mul (mode 3)
+  // 16-20: Mix/Div (mode 5)
+  int _getModeFromLevel() {
+    if (widget.level <= 5) return 1;
+    if (widget.level <= 10) return 2;
+    if (widget.level <= 15) return 3;
+    return 5;
+  }
+  
+  String _getTitle() {
+    int m = _getModeFromLevel();
+    switch(m) {
+      case 1: return "Addition (Lvl ${widget.level})";
+      case 2: return "Subtraction (Lvl ${widget.level})";
+      case 3: return "Multiplication (Lvl ${widget.level})";
+      default: return "Review (Lvl ${widget.level})";
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: 80,
-      height: 80,
-      child: ElevatedButton(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: color,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-          padding: EdgeInsets.zero,
-          elevation: 8,
-        ),
-        child: Text(text, style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => QuickCalculationScreen(mode: op, modeName: text),
-            ),
-          );
-        },
-      ),
-    );
+    // Directly show the game screen
+    return QuickCalculationScreen(mode: _getModeFromLevel(), modeName: _getTitle(), initialLevel: widget.level);
   }
 }
 
 class QuickCalculationScreen extends StatefulWidget {
   final int mode;
   final String modeName;
+  final int initialLevel;
 
-  QuickCalculationScreen({required this.mode, required this.modeName});
+  QuickCalculationScreen({required this.mode, required this.modeName, required this.initialLevel});
 
   @override
   _QuickCalculationScreenState createState() => _QuickCalculationScreenState();

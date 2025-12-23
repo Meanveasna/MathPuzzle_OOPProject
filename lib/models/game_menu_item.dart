@@ -2,16 +2,18 @@ import 'package:flutter/material.dart';
 
 class GameMenuItem {
   final String title;
-  final String emoji; // Changed from IconData
-  final List<Color> gradientColors;
+  final IconData icon;
+  final Color color;
   final String routeName;
   final Widget destination;
+  final int score;
 
   GameMenuItem({
     required this.title,
-    required this.emoji,
-    required this.gradientColors,
+    required this.icon,
+    required this.color,
     required this.routeName,
     required this.destination,
+    this.score = 0,
   });
 }

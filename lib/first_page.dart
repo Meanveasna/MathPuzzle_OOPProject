@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'menu.dart';
+import 'main_menu_page.dart';
 import 'player_storage.dart';
 import 'core/app_theme.dart';
 
@@ -51,7 +52,7 @@ class _FirstPageState extends State<FirstPage> with SingleTickerProviderStateMix
     Navigator.push(
       context,
       PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) => MenuPage(username: username, isNewUser: isNewUser),
+        pageBuilder: (context, animation, secondaryAnimation) => MainMenuPage(username: username),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           return FadeTransition(opacity: animation, child: child);
         },

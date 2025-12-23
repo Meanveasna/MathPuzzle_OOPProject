@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'quick_calculation_page.dart';
 import 'logical_puzzle_page.dart';
 import 'true_false_page.dart';
@@ -12,85 +13,183 @@ class MenuPage extends StatelessWidget {
 
   MenuPage({required this.username, required this.isNewUser});
 
-  final List<GameMenuItem> _menuItems = [
+  // Helper to create the specific menu items
+  List<GameMenuItem> get _menuItems => [
     GameMenuItem(
-      title: 'Quick Calculation',
-      emoji: '⏱️',
-      gradientColors: [Colors.orange, Colors.deepOrange],
+      title: 'Calculator', // Remapped for demo purposes or keep original names if logic dictates
+      icon: Icons.calculate,
+      color: AppTheme.primaryColor,
       routeName: '/quick',
       destination: QuickCalculationPage(),
+      score: 0,
     ),
     GameMenuItem(
-      title: 'Logical Puzzle',
-      emoji: '💡',
-      gradientColors: [Colors.green, Colors.teal],
+      title: 'Guess the sign?',
+      icon: Icons.question_mark_rounded,
+      color: AppTheme.primaryColor,
       routeName: '/logical',
       destination: LogicalPuzzlePage(),
+      score: 0,
     ),
-    GameMenuItem(
-      title: 'True / False',
-      emoji: '✅',
-      gradientColors: [Colors.blue, Colors.indigo],
+     GameMenuItem(
+      title: 'Correct answer',
+      icon: Icons.check_circle_outline,
+      color: AppTheme.primaryColor,
       routeName: '/truefalse',
       destination: TrueFalsePage(),
+      score: 0,
+    ),
+     GameMenuItem(
+      title: 'Quick calculation',
+      icon: Icons.flash_on_rounded,
+      color: AppTheme.primaryColor,
+      routeName: '/quick',
+       destination: QuickCalculationPage(), // Reusing generic page for now
+       score: 0,
     ),
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.backgroundColor,
+      backgroundColor: Colors.white, // Or the light blue scaffold color
       appBar: AppBar(
-        title: Text(
-          'Welcome, $username',
-          style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold),
-        ),
         backgroundColor: Colors.transparent,
         elevation: 0,
+        leading: BackButton(color: Colors.black),
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.emoji_events, color: Colors.amber, size: 32),
+            SizedBox(width: 8),
+            Text("0", style: GoogleFonts.nunito(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 28)),
+          ],
+        ),
         actions: [
-          InkWell(
-            onTap: () {
-              Navigator.push(context, MaterialPageRoute(builder: (_) => ProfilePage(username: username)));
+          IconButton(
+            icon: Icon(Icons.settings_outlined, color: Colors.black, size: 28),
+            onPressed: () {
+               Navigator.push(context, MaterialPageRoute(builder: (_) => ProfilePage(username: username)));
             },
-            borderRadius: BorderRadius.circular(50),
-            child: CircleAvatar(
-              backgroundColor: AppTheme.primaryColor.withOpacity(0.1),
-              child: Text(username[0].toUpperCase(), style: TextStyle(color: AppTheme.primaryColor)),
-            ),
           ),
           SizedBox(width: 16),
         ],
-        iconTheme: IconThemeData(color: Colors.black87),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Select a Game Mode',
-              style: TextStyle(fontSize: 18, color: Colors.grey[600]),
-            ),
-            SizedBox(height: 24),
-            Expanded(
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  int crossAxisCount = constraints.maxWidth > 600 ? 2 : 1;
-                  return GridView.builder(
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: crossAxisCount,
-                      mainAxisSpacing: 16,
-                      crossAxisSpacing: 16,
-                      childAspectRatio: 2.5,
+      body: Column(
+        children: [
+          // Header content if any, e.g. "Math Puzzle" title
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 20),
+            child: Column(
+              children: [
+                 Text(
+                   "Math Puzzle",
+                    style: GoogleFonts.nunito(
+                      fontSize: 32,
+                      fontWeight: FontWeight.w900,
+                      color: Color(0xFF4A4A4A),
                     ),
-                    itemCount: _menuItems.length,
-                    itemBuilder: (context, index) {
-                      return GameMenuCard(item: _menuItems[index]);
-                    },
-                  );
-                },
-              ),
+                 ),
+                 SizedBox(height: 10),
+                 Padding(
+                   padding: const EdgeInsets.symmetric(horizontal: 40),
+                   child: Text(
+                     "Each game with simple calculation with different approach.",
+                     textAlign: TextAlign.center,
+                      style: GoogleFonts.nunito(
+                        fontSize: 16,
+                        color: Colors.grey[600],
+                        fontWeight: FontWeight.w600,
+                      ),
+                   ),
+                 ),
+              ],
             ),
+          ),
+          
+          Expanded(
+            child: GridView.builder(
+              padding: EdgeInsets.all(24),
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                mainAxisSpacing: 24,
+                crossAxisSpacing: 24,
+                childAspectRatio: 0.75, // Taller cards
+              ),
+              itemCount: _menuItems.length,
+              itemBuilder: (context, index) {
+                return _buildGameCard(context, _menuItems[index]);
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGameCard(BuildContext context, GameMenuItem item) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(context, MaterialPageRoute(builder: (_) => item.destination));
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          color: item.color,
+          borderRadius: BorderRadius.circular(24),
+           boxShadow: [
+            BoxShadow(
+              color: item.color.withOpacity(0.4),
+              offset: Offset(0, 8),
+              blurRadius: 10,
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+             // Icon Container
+             Container(
+               padding: EdgeInsets.all(12),
+               decoration: BoxDecoration(
+                 color: AppTheme.yellowColor, // Yellow bg for icon
+                 borderRadius: BorderRadius.circular(16),
+                 border: Border.all(color: Colors.black87, width: 2),
+               ),
+               child: Icon(item.icon, size: 40, color: Colors.black87),
+             ),
+             SizedBox(height: 16),
+             Text(
+               item.title,
+               textAlign: TextAlign.center,
+               style: GoogleFonts.nunito(
+                 fontSize: 18,
+                 fontWeight: FontWeight.bold,
+                 color: Colors.black87,
+               ),
+             ),
+             Spacer(),
+             // Trophy Score
+             Container(
+               margin: EdgeInsets.only(bottom: 20),
+               padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+               decoration: BoxDecoration(
+                 color: AppTheme.yellowColor,
+                 borderRadius: BorderRadius.circular(12),
+                 border: Border.all(color: Colors.transparent), // Can add border if needed
+               ),
+               child: Row(
+                 mainAxisSize: MainAxisSize.min,
+                 children: [
+                   Icon(Icons.emoji_events_outlined, size: 18, color: Colors.brown),
+                   SizedBox(width: 8),
+                   Text(
+                     "${item.score}",
+                     style: TextStyle(fontWeight: FontWeight.bold, color: Colors.brown),
+                   ),
+                 ],
+               ),
+             ),
           ],
         ),
       ),
@@ -98,84 +197,3 @@ class MenuPage extends StatelessWidget {
   }
 }
 
-class GameMenuCard extends StatefulWidget {
-  final GameMenuItem item;
-
-  GameMenuCard({required this.item});
-
-  @override
-  _GameMenuCardState createState() => _GameMenuCardState();
-}
-
-class _GameMenuCardState extends State<GameMenuCard> with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _scaleAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-        duration: Duration(milliseconds: 200), vsync: this);
-    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.95).animate(_controller);
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTapDown: (_) => _controller.forward(),
-      onTapUp: (_) {
-        _controller.reverse();
-        Navigator.push(context, MaterialPageRoute(builder: (_) => widget.item.destination));
-      },
-      onTapCancel: () => _controller.reverse(),
-      child: ScaleTransition(
-        scale: _scaleAnimation,
-        child: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(colors: widget.item.gradientColors),
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: widget.item.gradientColors.first.withOpacity(0.4),
-                blurRadius: 10,
-                offset: Offset(0, 5),
-              ),
-            ],
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Row(
-              children: [
-                Container(
-                  padding: EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Text(widget.item.emoji, style: TextStyle(fontSize: 32)),
-                ),
-                SizedBox(width: 24),
-                Text(
-                  widget.item.title,
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                Spacer(),
-                Icon(Icons.arrow_forward_ios, color: Colors.white70),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
