@@ -13,7 +13,6 @@ class MenuPage extends StatelessWidget {
 
   MenuPage({required this.username, required this.isNewUser});
 
-  // Helper to create the specific menu items
   List<GameMenuItem> get _menuItems => [
     GameMenuItem(
       title: 'Calculator', // Remapped for demo purposes or keep original names if logic dictates

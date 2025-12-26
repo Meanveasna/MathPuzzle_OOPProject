@@ -7,7 +7,7 @@ class AppTheme {
   static const Color purpleColor = Color(0xFFD4B3FF); // Pastel Purple
   static const Color yellowColor = Color(0xFFFFF59D); // Pastel Yellow for icons
   static const Color backgroundColor = Color(0xFFE3F2FD); // Light Blue Background
-  static const Color errorColor = Color(0xFFFF5252); // Red for errors
+  static const Color errorColor = Color(0xFFFF5252); // Red 
   
   static const LinearGradient primaryGradient = LinearGradient(
     colors: [Color(0xFFE3F2FD), Color(0xFFF3E5F5)], // Light Blue to Light Purple

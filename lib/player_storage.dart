@@ -26,6 +26,12 @@ class PlayerRepository {
     }
     _initialized = true;
   }
+  
+  // Public method to force reload
+  Future<void> load() async {
+    _initialized = false;
+    await _init();
+  }
 
   Future<bool> checkUser(String username) async {
     await _init();
@@ -61,8 +67,15 @@ class PlayerRepository {
 
   Future<void> _save() async {
     List<String> lines = [];
-    lines.add('username,email,gender,phone,image_path'); // Header
+    lines.add('username,avatar_id,total_score,quick_level,logical_level,level_stars'); // Header
     lines.addAll(_users.map((u) => u.toCsvString()));
     await FileStorage().writeCsv(lines);
+  }
+
+  // Get Top Players for Scoreboard
+  List<User> getTopPlayers() {
+    List<User> sortedUsers = List.from(_users);
+    sortedUsers.sort((a, b) => b.totalScore.compareTo(a.totalScore));
+    return sortedUsers;
   }
 }

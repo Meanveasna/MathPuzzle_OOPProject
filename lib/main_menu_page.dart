@@ -1,9 +1,12 @@
+import 'scoreboard_page.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'core/app_theme.dart';
-import 'menu.dart';
+
 import 'true_false_page.dart';
 import 'level_selection_page.dart';
+import 'settings_page.dart';
+import 'profile_page.dart';
 
 class MainMenuPage extends StatelessWidget {
   final String username;
@@ -30,19 +33,79 @@ class MainMenuPage extends StatelessWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    // Back logic or User Info could go here if needed, but per design it's clean or has settings
-                    // Design shows a simple trophy or settings icon.
-                    Row(
-                      children: [
-                        Icon(Icons.emoji_events, color: Colors.amber, size: 30),
-                        SizedBox(width: 8),
-                        Text(
-                          "0",
-                          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                        ),
-                      ],
+                    // Profile Link
+                    GestureDetector(
+                      onTap: () {
+                        // Navigate to Profile
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => ProfilePage(username: username)),
+                        );
+                      },
+                      child: Row(
+                        children: [
+                           CircleAvatar(
+                            backgroundColor: Colors.white,
+                            radius: 20,
+                            child: Icon(Icons.person, color: AppTheme.primaryColor),
+                          ),
+                          SizedBox(width: 8),
+                          Column(
+                             crossAxisAlignment: CrossAxisAlignment.start,
+                             children: [
+                               Text(
+                                username,
+                                style: TextStyle(
+                                  fontSize: 16, 
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF5A5A5A),
+                                ),
+                               ),
+                               Row(
+                                children: [
+                                  Icon(Icons.emoji_events, color: Colors.amber, size: 16),
+                                  SizedBox(width: 4),
+                                  Text(
+                                    "0",
+                                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                                  ),
+                                ],
+                               ),
+                             ]
+                          )
+                        ],
+                      ),
                     ),
-                    Icon(Icons.settings, size: 30),
+                    
+                    // Scoreboard Button
+                    GestureDetector(
+                      onTap: () {
+                         Navigator.push(context, MaterialPageRoute(builder: (context) => ScoreboardPage(currentUsername: username)));
+                      },
+                      child: Container(
+                        padding: EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.5),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(Icons.emoji_events, size: 28, color: Colors.amber),
+                      ),
+                    ),
+                    
+                    // Settings Button
+                    GestureDetector(
+                      onTap: () {
+                         Navigator.push(context, MaterialPageRoute(builder: (context) => SettingsPage()));
+                      },
+                      child: Container(
+                        padding: EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.5),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(Icons.settings, size: 28, color: Color(0xFF5A5A5A)),
+                      ),
+                    ),
                   ],
                 ),
               ),

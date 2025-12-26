@@ -17,6 +17,7 @@ class LevelSelectionPage extends StatefulWidget {
 }
 
 class _LevelSelectionPageState extends State<LevelSelectionPage> {
+  User? _currentUser;
   int unlockedLevel = 1;
 
   @override
@@ -30,6 +31,7 @@ class _LevelSelectionPageState extends State<LevelSelectionPage> {
     if (user != null) {
       if (mounted) {
          setState(() {
+           _currentUser = user;
            unlockedLevel = user.levels[widget.mode] ?? 1;
          });
       }
@@ -65,14 +67,19 @@ class _LevelSelectionPageState extends State<LevelSelectionPage> {
                 crossAxisCount: 4, // 4 columns
                 crossAxisSpacing: 15,
                 mainAxisSpacing: 15,
-                childAspectRatio: 1.0,
+                childAspectRatio: 0.8, // Taller to fit stars
               ),
               itemCount: 20, // 20 Levels
               itemBuilder: (context, index) {
                 int level = index + 1;
                 bool isLocked = level > unlockedLevel;
                 
-                return _buildLevelButton(level, isLocked, themeColor);
+                int stars = 0;
+                if (_currentUser != null && _currentUser!.levelStars.containsKey(widget.mode)) {
+                   stars = _currentUser!.levelStars[widget.mode]!['$level'] ?? 0;
+                }
+                
+                return _buildLevelButton(level, isLocked, themeColor, stars);
               },
             ),
           ),
@@ -81,7 +88,7 @@ class _LevelSelectionPageState extends State<LevelSelectionPage> {
     );
   }
 
-  Widget _buildLevelButton(int level, bool isLocked, Color color) {
+  Widget _buildLevelButton(int level, bool isLocked, Color color, int stars) {
     return GestureDetector(
       onTap: () {
         if (!isLocked) {
@@ -105,10 +112,13 @@ class _LevelSelectionPageState extends State<LevelSelectionPage> {
               )
           ],
         ),
-        child: Center(
-          child: isLocked
-              ? Icon(Icons.lock, color: Colors.grey[600])
-              : Text(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            if (isLocked)
+               Icon(Icons.lock, color: Colors.grey[600]),
+            if (!isLocked)
+               Text(
                   "$level",
                   style: GoogleFonts.nunito(
                     fontSize: 20,
@@ -116,19 +126,27 @@ class _LevelSelectionPageState extends State<LevelSelectionPage> {
                     color: Colors.white,
                   ),
                 ),
+            if (!isLocked && stars > 0)
+              Padding(
+                padding: const EdgeInsets.only(top: 4.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(3, (i) => Icon(
+                    i < stars ? Icons.star : Icons.star_border, 
+                    size: 12, 
+                    color: Colors.amberAccent
+                  )),
+                ),
+              )
+          ],
         ),
       ),
     );
   }
 
   void _navigateToLevel(int level) {
-    Widget destination;
-    if (widget.mode == 'quick') {
-      destination = QuickCalculationPage(level: level);
-    } else {
-      destination = LogicalPuzzlePage(level: level);
-    }
-    
-    Navigator.push(context, MaterialPageRoute(builder: (_) => destination));
+    Navigator.push(context, MaterialPageRoute(builder: (_) => 
+      QuickCalculationPage(level: level, username: widget.username)
+    )).then((_) => _loadUserProgress()); // Reload when returning
   }
 }

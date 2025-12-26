@@ -5,7 +5,7 @@ class GameMenuItem {
   final IconData icon;
   final Color color;
   final String routeName;
-  final Widget destination;
+  final Widget destination; //navigate push
   final int score;
 
   GameMenuItem({

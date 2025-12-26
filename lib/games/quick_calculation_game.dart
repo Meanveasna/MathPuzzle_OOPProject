@@ -2,15 +2,15 @@ import 'dart:math';
 import '../core/game_engine.dart';
 
 class QuickCalculationGame extends PuzzleGame {
-  final int mode; // 1: +, 2: -, 3: *, 4: /, 5: Mix
+  final int level;
   final Random _rand = Random();
 
   int a = 0;
   int b = 0;
   String operator = '+';
   int _correctAnswer = 0;
-
-  QuickCalculationGame(this.mode);
+  
+  QuickCalculationGame(this.level); // Mode derived from level
 
   @override
   void start() {
@@ -21,43 +21,53 @@ class QuickCalculationGame extends PuzzleGame {
 
   @override
   void generateQuestion() {
-    // Difficulty curve: 0-10 easy, 10-20 medium, 20+ hard
-    int maxNumber = 10;
-    if (totalScore > 20) maxNumber = 100;
-    else if (totalScore > 10) maxNumber = 50;
-    else maxNumber = 20;
+    // Level Logic:
+    // 1: Add, 2: Sub, 3: Mul, 4: Div, 5,6,7..: Mix/Cycle or mapped
+    // Requirement:
+    // L1: Add (1-10)
+    // L2: Sub
+    // L3: Mul
+    // L4: Div
+    // L5: Mix
+    // L6+: Repeat but harder
+    
+    int cycle = (level - 1) % 5; // 0=Add, 1=Sub, 2=Mul, 3=Div, 4=Mix
+    int difficulty = (level - 1) ~/ 5; // Increases every 5 levels
+    
+    int maxNumber = 10 + (difficulty * 10); // 10, 20, 30...
+    
+    // Determine operator
+    if (cycle == 4) {
+       // Mix
+       List<String> ops = ['+', '-', '*', '/'];
+       operator = ops[_rand.nextInt(4)];
+    } else {
+       if (cycle == 0) operator = '+';
+       else if (cycle == 1) operator = '-';
+       else if (cycle == 2) operator = '*';
+       else if (cycle == 3) operator = '/';
+    }
 
     a = _rand.nextInt(maxNumber) + 1;
     b = _rand.nextInt(maxNumber) + 1;
 
-    List<String> ops = ['+', '-', '*', '/'];
-    if (mode == 5) {
-      operator = ops[_rand.nextInt(4)];
-    } else {
-      switch (mode) {
-        case 1: operator = '+'; break;
-        case 2: operator = '-'; break;
-        case 3: operator = '*'; break;
-        case 4: operator = '/'; break;
-      }
-    }
-
     if (operator == '/') {
-      // Ensure clean division
-      b = _rand.nextInt(10) + 1; // Keep divisor small for mental math
-      int multiplier = _rand.nextInt(10) + 1;
-      a = b * multiplier;
+      // Clean division
+      b = _rand.nextInt(maxNumber ~/ 2 + 1) + 1;
+      if (b > 10 + difficulty * 2) b = 10; // Keep divisor reasonable
+      a = b * (_rand.nextInt(10) + 1);
       _correctAnswer = a ~/ b;
     } else if (operator == '*') {
-       // Keep numbers smaller for mental multiplication
-       a = _rand.nextInt(12) + 1;
-       b = _rand.nextInt(12) + 1;
+       // Smaller numbers for multiply
+       int limit = (maxNumber > 12) ? 12 : maxNumber; 
+       a = _rand.nextInt(limit) + 1;
+       b = _rand.nextInt(limit) + 1;
       _correctAnswer = a * b;
     } else if (operator == '+') {
       _correctAnswer = a + b;
     } else if (operator == '-') {
-      // Allow negatives? Let's keep it simple for now, maybe only positive results?
-      // No, allow negatives for "Hard" mode implicitly
+      // Ensure positive result for early levels? User didn't specify, but safer.
+      if (a < b) { int temp = a; a = b; b = temp; }
       _correctAnswer = a - b;
     }
   }

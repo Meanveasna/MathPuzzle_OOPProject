@@ -2,10 +2,14 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'games/quick_calculation_game.dart';
 import 'core/app_theme.dart';
+import 'models/user_model.dart';
+import 'player_storage.dart';
 
 class QuickCalculationPage extends StatefulWidget {
   final int level;
-  QuickCalculationPage({this.level = 1});
+  final String username;
+  
+  QuickCalculationPage({this.level = 1, required this.username});
 
   @override
   _QuickCalculationPageState createState() => _QuickCalculationPageState();
@@ -13,10 +17,6 @@ class QuickCalculationPage extends StatefulWidget {
 
 class _QuickCalculationPageState extends State<QuickCalculationPage> {
   // Determine mode based on level
-  // 1-5: Add (mode 1)
-  // 6-10: Sub (mode 2)
-  // 11-15: Mul (mode 3)
-  // 16-20: Mix/Div (mode 5)
   int _getModeFromLevel() {
     if (widget.level <= 5) return 1;
     if (widget.level <= 10) return 2;
@@ -36,8 +36,12 @@ class _QuickCalculationPageState extends State<QuickCalculationPage> {
 
   @override
   Widget build(BuildContext context) {
-    // Directly show the game screen
-    return QuickCalculationScreen(mode: _getModeFromLevel(), modeName: _getTitle(), initialLevel: widget.level);
+    return QuickCalculationScreen(
+      mode: _getModeFromLevel(), 
+      modeName: _getTitle(), 
+      initialLevel: widget.level,
+      username: widget.username,
+    );
   }
 }
 
@@ -45,8 +49,14 @@ class QuickCalculationScreen extends StatefulWidget {
   final int mode;
   final String modeName;
   final int initialLevel;
+  final String username;
 
-  QuickCalculationScreen({required this.mode, required this.modeName, required this.initialLevel});
+  QuickCalculationScreen({
+    required this.mode, 
+    required this.modeName, 
+    required this.initialLevel,
+    required this.username,
+  });
 
   @override
   _QuickCalculationScreenState createState() => _QuickCalculationScreenState();
@@ -61,11 +71,14 @@ class _QuickCalculationScreenState extends State<QuickCalculationScreen> with Ti
   Timer? timer;
   late AnimationController _timerAnimController;
   Color _timerColor = Colors.green;
+  
+  int correctCount = 0;
+  int earnedStars = 0;
 
   @override
   void initState() {
     super.initState();
-    game = QuickCalculationGame(widget.mode);
+    game = QuickCalculationGame(widget.initialLevel);
     game.start();
     _timerAnimController = AnimationController(vsync: this, duration: Duration(seconds: 20));
     _timerAnimController.reverse(from: 1.0);
@@ -95,17 +108,55 @@ class _QuickCalculationScreenState extends State<QuickCalculationScreen> with Ti
   }
 
   void processAnswer(String? input) {
-    game.processAnswer(input, secondsLeft);
+    int score = game.processAnswer(input, secondsLeft);
+    if (score > 0) correctCount++;
 
     if (game.questionIndex >= 10) {
       timer?.cancel();
-      setState(() { showResult = true; });
+      _finishLevel();
     } else {
       answerController.clear();
       game.generateQuestion();
       startTimer();
     }
     if (mounted) setState(() {});
+  }
+
+  void _finishLevel() async {
+    // Calculate Stars
+    if (correctCount >= 10) earnedStars = 3;
+    else if (correctCount >= 8) earnedStars = 2;
+    else if (correctCount >= 5) earnedStars = 1;
+    else earnedStars = 0;
+
+    // Save Logic
+    User? user = await PlayerRepository().getUser(widget.username);
+    if (user != null) {
+      // Update Stars
+      var quickStars = user.levelStars['quick'] ?? {};
+      int currentStars = quickStars['${widget.initialLevel}'] ?? 0;
+      if (earnedStars > currentStars) {
+        quickStars['${widget.initialLevel}'] = earnedStars;
+        user.levelStars['quick'] = quickStars;
+      }
+      
+      // Unlock Next Level
+      if (earnedStars >= 1) {
+        int currentMaxLevel = user.levels['quick'] ?? 1;
+        if (widget.initialLevel >= currentMaxLevel) {
+          user.levels['quick'] = widget.initialLevel + 1;
+        }
+      }
+      
+      // Update Total Score
+      user.calculateTotalScore();
+      
+      await PlayerRepository().updateUser(user);
+    }
+    
+    if (mounted) {
+       setState(() { showResult = true; });
+    }
   }
 
   @override
@@ -121,17 +172,49 @@ class _QuickCalculationScreenState extends State<QuickCalculationScreen> with Ti
     if (showResult) {
       return Scaffold(
         backgroundColor: AppTheme.backgroundColor,
-        appBar: AppBar(title: Text('Round Complete')),
+        appBar: AppBar(title: Text('Level Complete')),
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.emoji_events, size: 100, color: Colors.amber),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(3, (index) {
+                  return Icon(
+                    index < earnedStars ? Icons.star : Icons.star_border,
+                    size: 60,
+                    color: Colors.amber,
+                  );
+                }),
+              ),
               SizedBox(height: 20),
-              Text('Total Score', style: TextStyle(fontSize: 24, color: Colors.grey)),
-              Text('${game.totalScore}', style: TextStyle(fontSize: 60, fontWeight: FontWeight.bold, color: AppTheme.primaryColor)),
+              Text(earnedStars >= 1 ? 'Level Passed!' : 'Level Failed', 
+                  style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: earnedStars >= 1 ? Colors.green : Colors.red)),
+              SizedBox(height: 10),
+              Text('Correct: $correctCount / 10', style: TextStyle(fontSize: 20)),
               SizedBox(height: 40),
+              
+              if (earnedStars >= 1)
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.green, padding: EdgeInsets.symmetric(horizontal: 40, vertical: 15)),
+                  child: Text('NEXT LEVEL', style: TextStyle(fontSize: 20)),
+                  onPressed: () {
+                     Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => 
+                       QuickCalculationPage(level: widget.initialLevel + 1, username: widget.username)
+                   ));
+                  },
+                ),
+                
+              SizedBox(height: 20),
               ElevatedButton(
+                child: Text('RETRY'),
+                onPressed: () {
+                  Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => 
+                     QuickCalculationPage(level: widget.initialLevel, username: widget.username)
+                  ));
+                },
+              ),
+              TextButton(
                 child: Text('Back to Menu'),
                 onPressed: () => Navigator.pop(context),
               ),
@@ -143,7 +226,7 @@ class _QuickCalculationScreenState extends State<QuickCalculationScreen> with Ti
 
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
-      appBar: AppBar(title: Text('${widget.modeName} Round')),
+      appBar: AppBar(title: Text('${widget.modeName}')),
       body: SingleChildScrollView(
         padding: EdgeInsets.all(20),
         child: Column(
