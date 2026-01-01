@@ -3,8 +3,8 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'core/app_theme.dart';
 import 'core/file_storage.dart';
-
-
+import 'first_page.dart';
+import 'player_storage.dart';
 class SettingsPage extends StatefulWidget {
   @override
   _SettingsPageState createState() => _SettingsPageState();
@@ -72,16 +72,44 @@ class _SettingsPageState extends State<SettingsPage> {
             SizedBox(height: 10),
 
             ListTile(
-               title: Text("Reset Progress"),
-               subtitle: Text("Clear all levels and scores"),
-               leading: Icon(Icons.delete_forever, color: Colors.red),
-               onTap: () {
-                 // Logic to reset progress would go here.
-                 ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Feature coming soon!")));
-               },
-               tileColor: Colors.white,
-               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              title: Text("Reset Progress"),
+              subtitle: Text("Clear all levels and scores"),
+              leading: Icon(Icons.delete_forever, color: Colors.red),
+              onTap: () async {
+                bool? confirm = await showDialog<bool>(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: Text("Reset Game"),
+                    content: Text("Are you sure you want to reset the game? All progress will be lost."),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, false),
+                        child: Text("No"),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, true),
+                        child: Text("Yes", style: TextStyle(color: Colors.red)),
+                      ),
+                    ],
+                  ),
+                );
+
+                if (confirm == true) {
+                  // Fully reset everything
+                  await PlayerRepository().resetAll();
+
+                  // Navigate to FirstPage immediately, clearing all previous routes
+                  Navigator.of(context).pushAndRemoveUntil(
+                    MaterialPageRoute(builder: (_) => FirstPage()),
+                    (route) => false,
+                  );
+                }
+              },
+              tileColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
+
+
           ],
         ),
       ),

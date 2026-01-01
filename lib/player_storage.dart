@@ -1,81 +1,59 @@
 import 'models/user_model.dart';
 import 'core/file_storage.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class PlayerRepository {
   static final PlayerRepository _instance = PlayerRepository._internal();
-  
-  factory PlayerRepository() {
-    return _instance;
-  }
+
+  factory PlayerRepository() => _instance;
 
   PlayerRepository._internal();
 
   List<User> _users = [];
+  User? _currentUser;
   bool _initialized = false;
 
-  Future<void> _init() async {
-    if (_initialized) return;
-    final rows = await FileStorage().readCsv();
-    // Assuming First Row could be header, we can check or just parse
-    // For simplicity, let's say NO header for now, or we check content
-    _users.clear();
-    for (var row in rows) {
-      if (row.isNotEmpty && row[0] != 'username') { // Basic header check
-         _users.add(User.fromCsvList(row));
-      }
-    }
-    _initialized = true;
-  }
-  
-  // Public method to force reload
-  Future<void> load() async {
-    _initialized = false;
-    await _init();
+  final FileStorage _storage = FileStorage();
+
+  /// Initialize repository
+  Future<void> init() async {
+    if (_currentUser != null) return;
+    _currentUser = await _storage.loadUser();
   }
 
+  /// Check or create first-time user
   Future<bool> checkUser(String username) async {
-    await _init();
-    
-    // Case-insensitive check
-    var existingUser = _users.where((user) => user.username.toLowerCase() == username.toLowerCase());
-    
-    if (existingUser.isEmpty) {
-      _users.add(User(username: username));
-      await _save();
-      return true; // isNewUser
-    }
-    return false; // Not new, login successful
+    await init();
+    if (_currentUser != null) return false; // user already exists
+    _currentUser = User(username: username);
+    await _storage.saveUser(_currentUser!);
+    return true; // first-time user
   }
 
-  // Get current user object
-  Future<User?> getUser(String username) async {
-    await _init();
-    try {
-      return _users.firstWhere((u) => u.username.toLowerCase() == username.toLowerCase());
-    } catch (e) {
-      return null;
-    }
+  /// Get current user
+  Future<User?> getUser() async {
+    await init();
+    return _currentUser;
   }
 
-  Future<void> updateUser(User updatedUser) async {
-    int index = _users.indexWhere((u) => u.username == updatedUser.username);
-    if (index != -1) {
-      _users[index] = updatedUser;
-      await _save();
-    }
+  /// Update current user
+  Future<void> updateUser(User user) async {
+    _currentUser = user;
+    await _storage.saveUser(user);
   }
 
-  Future<void> _save() async {
-    List<String> lines = [];
-    lines.add('username,avatar_id,total_score,quick_level,logical_level,level_stars'); // Header
-    lines.addAll(_users.map((u) => u.toCsvString()));
-    await FileStorage().writeCsv(lines);
-  }
+  /// Reset repository and user data
+  Future<void> resetAll() async {
+    // Clear in-memory state
+    _users.clear();
+    _currentUser = null;
+    _initialized = false;
 
-  // Get Top Players for Scoreboard
-  List<User> getTopPlayers() {
-    List<User> sortedUsers = List.from(_users);
-    sortedUsers.sort((a, b) => b.totalScore.compareTo(a.totalScore));
-    return sortedUsers;
+    // Clear storage
+    await _storage.deleteUser();
+
+    // Clear any remaining SharedPreferences keys
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
   }
 }

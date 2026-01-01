@@ -130,7 +130,7 @@ class _QuickCalculationScreenState extends State<QuickCalculationScreen> with Ti
     else earnedStars = 0;
 
     // Save Logic
-    User? user = await PlayerRepository().getUser(widget.username);
+    User? user = await PlayerRepository().getUser();
     if (user != null) {
       // Update Stars
       var quickStars = user.levelStars['quick'] ?? {};

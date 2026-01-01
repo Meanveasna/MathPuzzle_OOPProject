@@ -1,46 +1,44 @@
 import 'dart:convert';
-import 'dart:io';
-
+import 'package:shared_preferences/shared_preferences.dart';
+import '../models/user_model.dart';
 
 class FileStorage {
   static final FileStorage _instance = FileStorage._internal();
-  
-  factory FileStorage() {
-    return _instance;
-  }
-
+  factory FileStorage() => _instance;
   FileStorage._internal();
 
-  final String _fileName = 'user_data.csv';
+  static const String _keyUser = 'current_user';
 
-  Future<File> get _localFile async {
-    return File(_fileName);
+  /// Save user to SharedPreferences
+  Future<void> saveUser(User user) async {
+    final prefs = await SharedPreferences.getInstance();
+    String jsonString = jsonEncode(user.toMap());
+    await prefs.setString(_keyUser, jsonString);
   }
 
-  // Returns a List of rows, where each row is a List of Strings
-  Future<List<List<String>>> readCsv() async {
+  /// Load user from SharedPreferences
+  Future<User?> loadUser() async {
+    final prefs = await SharedPreferences.getInstance();
+    String? jsonString = prefs.getString(_keyUser);
+    if (jsonString == null) return null;
     try {
-      final file = await _localFile;
-      print("Reading CSV from: ${file.absolute.path}");
-      if (!await file.exists()) {
-        return [];
-      }
-      List<String> lines = await file.readAsLines();
-      return lines.map((line) => line.split(',')).toList();
+      Map<String, dynamic> map = jsonDecode(jsonString);
+      return User.fromMap(map);
     } catch (e) {
-      print("Error reading CSV: $e");
-      return [];
+      print("Error decoding user JSON: $e");
+      return null;
     }
   }
 
-  // Writes list of rows to CSV
-  Future<void> writeCsv(List<String> lines) async {
-    try {
-      final file = await _localFile;
-      print("Writing CSV to: ${file.absolute.path}");
-      await file.writeAsString(lines.join('\n'));
-    } catch (e) {
-      print("Error writing CSV: $e");
-    }
+  /// Check if a user already exists
+  Future<bool> hasUser() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.containsKey(_keyUser);
+  }
+
+  /// Delete user (optional)
+  Future<void> deleteUser() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_keyUser);
   }
 }

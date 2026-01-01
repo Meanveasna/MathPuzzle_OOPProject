@@ -16,24 +16,24 @@ class _ScoreboardPageState extends State<ScoreboardPage> {
   List<User> _topPlayers = [];
   bool _isLoading = true;
 
-  @override
-  void initState() {
-    super.initState();
-    _loadScoreboard();
-  }
+  // @override
+  // void initState() {
+  //   super.initState();
+  //   _loadScoreboard();
+  // }
 
-  void _loadScoreboard() async {
-    // Force reload from repo to ensure updated scores
-    await PlayerRepository().load(); 
-    List<User> players = PlayerRepository().getTopPlayers();
+  // void _loadScoreboard() async {
+  //   // Force reload from repo to ensure updated scores
+  //   await PlayerRepository().load(); 
+  //   List<User> players = PlayerRepository().getTopPlayers();
     
-    if (mounted) {
-      setState(() {
-        _topPlayers = players;
-        _isLoading = false;
-      });
-    }
-  }
+  //   if (mounted) {
+  //     setState(() {
+  //       _topPlayers = players;
+  //       _isLoading = false;
+  //     });
+  //   }
+  // }
 
   @override
   Widget build(BuildContext context) {

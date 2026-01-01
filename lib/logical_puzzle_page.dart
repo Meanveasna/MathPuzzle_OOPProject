@@ -1,136 +1,300 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'core/app_theme.dart';
+import 'main_menu_page.dart';
 import 'games/logical_puzzle_game.dart';
+import 'level_selection_page.dart';
+import 'player_storage.dart';
+import 'models/user_model.dart';
 
-class LogicalPuzzlePage extends StatefulWidget {
-  final int level;
+final LogicalPuzzleGame game = LogicalPuzzleGame();
 
-  LogicalPuzzlePage({this.level = 1});
+class LogicalPuzzlePage extends StatelessWidget {
+  final String username;
+  final int level; // 1-based level from LevelSelectionPage
+
+  const LogicalPuzzlePage({
+    super.key,
+    required this.username,
+    required this.level,
+  });
 
   @override
-  _LogicalPuzzlePageState createState() => _LogicalPuzzlePageState();
+  Widget build(BuildContext context) {
+    return PlayLevelScreen(
+      username: username,
+      levelIndex: level - 1, // convert to 0-based
+    );
+  }
 }
 
-class _LogicalPuzzlePageState extends State<LogicalPuzzlePage> {
-  late LogicalPuzzleGame game;
-  bool showResult = false;
+class PlayLevelScreen extends StatefulWidget {
+  final int levelIndex;
+  final String username;
+
+  const PlayLevelScreen({
+    super.key,
+    required this.levelIndex,
+    required this.username,
+  });
 
   @override
-  void initState() {
-    super.initState();
-    game = LogicalPuzzleGame();
-    game.start();
+  _PlayLevelScreenState createState() => _PlayLevelScreenState();
+}
+
+const Color backgroundColor = Color(0xFFE3F2FD); // soft blue
+const Color primaryColor = Color(0xFFFF8FA3);         // default Flutter pink
+
+class _PlayLevelScreenState extends State<PlayLevelScreen> {
+  final TextEditingController controller = TextEditingController();
+  String message = '';
+
+  void appendDigit(String digit) {
+    setState(() {
+      controller.text += digit;
+    });
   }
 
-  void _processAnswer(String answer) {
-    int points = game.processAnswer(answer, 0);
-    
-    // Show feedback or just move to next
-    if (game.questionIndex >= 5) { // 5 Questions per round for Logic
+  void deleteDigit() {
+    if (controller.text.isNotEmpty) {
       setState(() {
-        showResult = true;
+        controller.text =
+            controller.text.substring(0, controller.text.length - 1);
       });
+    }
+  }
+
+  Future<void> checkAnswer() async {
+    if (game.isCorrect(widget.levelIndex, controller.text)) {
+      int nextUnlockedLevel = widget.levelIndex + 2;
+
+      final repo = PlayerRepository();
+      User? user = await repo.getUser();
+      if (user != null) {
+        final currentUnlocked = user.levels['logical'] ?? 1;
+        if (nextUnlockedLevel > currentUnlocked) {
+          user.levels['logical'] = nextUnlockedLevel;
+        }
+        await repo.updateUser(user);
+      }
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => CongratsScreen(
+            username: widget.username,
+            nextLevel: widget.levelIndex + 2,
+          ),
+        ),
+      );
     } else {
       setState(() {
-        game.generateQuestion();
+        message = "Wrong answer! Try again.";
       });
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    if (showResult) {
-       return Scaffold(
-        backgroundColor: AppTheme.backgroundColor,
-        appBar: AppBar(title: Text('Round Complete')),
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.psychology, size: 100, color: AppTheme.purpleColor),
-              SizedBox(height: 20),
-              Text('Total Score', style: TextStyle(fontSize: 24, color: Colors.grey)),
-              Text('${game.totalScore}', style: TextStyle(fontSize: 60, fontWeight: FontWeight.bold, color: AppTheme.primaryColor)),
-              SizedBox(height: 40),
-              ElevatedButton(
-                child: Text('Back to Menu'),
-                onPressed: () => Navigator.pop(context),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) {
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(
+              builder: (_) => LevelSelectionPage(
+                mode: 'logical',
+                username: widget.username,
               ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    return Scaffold(
-      backgroundColor: AppTheme.backgroundColor,
-      appBar: AppBar(
-        title: Text('Logic Puzzle (Lvl ${widget.level})'),
-        leading: BackButton(),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-           children: [
-             LinearProgressIndicator(
-              value: (game.questionIndex) / 5,
-              backgroundColor: Colors.grey[300],
-              valueColor: AlwaysStoppedAnimation<Color>(AppTheme.accentColor),
-              minHeight: 10,
-              borderRadius: BorderRadius.circular(5),
             ),
-            SizedBox(height: 20),
-            Expanded(
-              flex: 2,
-              child: Container(
-                width: double.infinity,
-                padding: EdgeInsets.all(30),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 10, offset: Offset(0,5))]
-                ),
-                child: Center(
-                  child: Text(
-                    game.questionText,
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.nunito(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87
-                    ),
+            (route) => false,
+          );
+        }
+      },
+      child: Scaffold(
+        backgroundColor: backgroundColor, // soft blue background
+        appBar: AppBar(
+          title: Text('Level ${widget.levelIndex + 1}'),
+          //backgroundColor: Colors.white,
+          foregroundColor: Colors.black, // black text/icon on white appbar
+          leading: IconButton(
+            icon: Icon(Icons.arrow_back),
+            onPressed: () {
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => LevelSelectionPage(
+                    mode: 'logical',
+                    username: widget.username,
                   ),
                 ),
-              ),
-            ),
-            SizedBox(height: 30),
-            Expanded(
-              flex: 3,
-              child: GridView.builder(
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 20,
-                  mainAxisSpacing: 20,
-                  childAspectRatio: 1.5,
+                (route) => false,
+              );
+            },
+          ),
+        ),
+        body: Padding(
+          padding: EdgeInsets.all(16),
+          child: Column(
+            children: [
+              // Display question as it is (no box)
+              Expanded(
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    return SingleChildScrollView(
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          minHeight: constraints.maxHeight,
+                        ),
+                        child: Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: game.questions[widget.levelIndex],
+                          ),
+                        ),
+                      ),
+                    );
+                  },
                 ),
-                itemCount: game.options.length,
-                itemBuilder: (context, index) {
-                  return ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.primaryColor,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+              ),
+
+              SizedBox(height: 20),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: controller,
+                      readOnly: true,
+                      decoration: InputDecoration(
+                        border: OutlineInputBorder(
+                          borderSide: BorderSide(color: primaryColor, width: 0.5),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderSide: BorderSide(color: primaryColor, width: 0.5),
+                        ),
+                        hintText: 'Enter answer',
+                        //hintStyle: TextStyle(color: primaryColor),
+                        errorText: message.isEmpty ? null : message,
+                      ),
+                      //style: TextStyle(color: primaryColor),
                     ),
-                    onPressed: () => _processAnswer(game.options[index]),
+                  ),
+                  SizedBox(width: 10),
+                  ElevatedButton(
                     child: Text(
-                      game.options[index],
-                      style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
+                      '×',
+                      style: TextStyle(fontSize: 20, color: Colors.black),
+                    ),
+                    onPressed: deleteDigit,
+                    style: ElevatedButton.styleFrom(
+                      //backgroundColor: Colors.white, // white background
+                      side: BorderSide(color: primaryColor, width: 0.5), // pink border
+                      minimumSize: Size(60, 60),
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 10),
+              GridView.builder(
+                shrinkWrap: true,
+                physics: NeverScrollableScrollPhysics(),
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 5,
+                  mainAxisSpacing: 12,
+                  crossAxisSpacing: 12,
+                ),
+                itemCount: 10,
+                itemBuilder: (context, i) {
+                  return ElevatedButton(
+                    child: Text(
+                      '$i',
+                      style: TextStyle(fontSize: 20, color: primaryColor), // default pink number
+                    ),
+                    onPressed: () => appendDigit('$i'),
+                    style: ElevatedButton.styleFrom(
+                      //backgroundColor: Colors.white, // white box
+                      side: BorderSide(color: primaryColor, width: 0.5), // pink border
+                      minimumSize: Size(60, 60),
                     ),
                   );
                 },
               ),
+              SizedBox(height: 10),
+              ElevatedButton(
+                child: Text(
+                  'Submit',
+                  style: TextStyle(fontSize: 20, color: Colors.black),
+                ),
+                onPressed: checkAnswer,
+                style: ElevatedButton.styleFrom(
+                  //backgroundColor: Colors.white, // white background
+                  side: BorderSide(color: primaryColor, width: 0.5), // pink border
+                  minimumSize: Size(double.infinity, 50),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class CongratsScreen extends StatelessWidget {
+  final int nextLevel;
+  final String username;
+
+  const CongratsScreen({
+    super.key,
+    required this.nextLevel,
+    required this.username,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    bool finishedAll = nextLevel > 15;
+
+    return Scaffold(
+      appBar: AppBar(title: Text('Congratulations!')),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              'Correct! 🎉',
+              style: TextStyle(
+                fontSize: 30,
+                fontWeight: FontWeight.bold,
+              ),
             ),
-           ],
+            SizedBox(height: 20),
+            ElevatedButton(
+              child: Text(
+                finishedAll ? 'Back to menu' : 'Next Level',
+                style: TextStyle(fontSize: 20),
+              ),
+              onPressed: () {
+                if (finishedAll) {
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => MainMenuPage(username: username),
+                    ),
+                    (route) => false,
+                  );
+                } else {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => LogicalPuzzlePage(
+                        username: username,
+                        level: nextLevel,
+                      ),
+                    ),
+                  );
+                }
+              },
+            ),
+          ],
         ),
       ),
     );

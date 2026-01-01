@@ -5,6 +5,7 @@ import 'quick_calculation_page.dart';
 import 'logical_puzzle_page.dart';
 import 'player_storage.dart';
 import 'models/user_model.dart';
+import 'main_menu_page.dart';
 
 class LevelSelectionPage extends StatefulWidget {
   final String mode; // 'quick' or 'logical'
@@ -27,7 +28,7 @@ class _LevelSelectionPageState extends State<LevelSelectionPage> {
   }
 
   void _loadUserProgress() async {
-    User? user = await PlayerRepository().getUser(widget.username);
+    User? user = await PlayerRepository().getUser();
     if (user != null) {
       if (mounted) {
          setState(() {
@@ -49,7 +50,18 @@ class _LevelSelectionPageState extends State<LevelSelectionPage> {
         title: Text(title, style: GoogleFonts.nunito(color: Colors.black, fontWeight: FontWeight.bold)),
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: BackButton(color: Colors.black),
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () {
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(
+                builder: (_) => MainMenuPage(username: widget.username),
+              ),
+              (route) => false,
+            );
+          },
+),
       ),
       body: Column(
         children: [
@@ -69,7 +81,7 @@ class _LevelSelectionPageState extends State<LevelSelectionPage> {
                 mainAxisSpacing: 15,
                 childAspectRatio: 0.8, // Taller to fit stars
               ),
-              itemCount: 20, // 20 Levels
+              itemCount: widget.mode == 'logical' ? 15 : 20,
               itemBuilder: (context, index) {
                 int level = index + 1;
                 bool isLocked = level > unlockedLevel;
@@ -145,8 +157,16 @@ class _LevelSelectionPageState extends State<LevelSelectionPage> {
   }
 
   void _navigateToLevel(int level) {
-    Navigator.push(context, MaterialPageRoute(builder: (_) => 
-      QuickCalculationPage(level: level, username: widget.username)
-    )).then((_) => _loadUserProgress()); // Reload when returning
+  Widget nextPage;
+  if (widget.mode == 'quick') {
+    nextPage = QuickCalculationPage(level: level, username: widget.username);
+  } else {
+    nextPage = LogicalPuzzlePage(level: level, username: widget.username);
   }
+
+  Navigator.push(
+    context,
+    MaterialPageRoute(builder: (_) => nextPage),
+  ).then((_) => _loadUserProgress()); // Reload when returning
+}
 }

@@ -31,7 +31,7 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   void _loadUserData() async {
-    User? user = await PlayerRepository().getUser(widget.username);
+    User? user = await PlayerRepository().getUser();
     if (user != null) {
        setState(() {
          _currentUser = user;
