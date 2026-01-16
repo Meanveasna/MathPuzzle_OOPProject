@@ -1,142 +1,206 @@
 import 'dart:async';
-import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'core/app_theme.dart';
 import 'games/true_false_game.dart';
+import 'core/sfx.dart';
+
 
 class TrueFalsePage extends StatefulWidget {
+  final String? username;
+  const TrueFalsePage({super.key, this.username});
+
   @override
-  _TrueFalsePageState createState() => _TrueFalsePageState();
+  State<TrueFalsePage> createState() => _TrueFalsePageState();
 }
 
 class _TrueFalsePageState extends State<TrueFalsePage> {
-  late TrueFalseGame game;
-  bool isGameActive = false;
+  static const int roundSeconds = 20;
+
+  final TrueFalseGameState game = TrueFalseGameState();
+
+  int timeLeft = roundSeconds;
+  bool showCongrats = false;
+  bool buttonsEnabled = true;
+
+  Timer? timer;
 
   @override
   void initState() {
     super.initState();
-    game = TrueFalseGame();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _showCountdownDialog();
-    });
+    Sfx.correct(); // test sound once
+    restartGame();
   }
 
-  void _showCountdownDialog() {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => CountdownDialog(onComplete: _startGame),
-    );
+  @override
+  void dispose() {
+    stopTimer();
+    super.dispose();
   }
 
-  void _startGame() {
+  void restartGame() {
+    stopTimer();
     setState(() {
-      game.start();
-      isGameActive = true;
+      showCongrats = false;
+      buttonsEnabled = true;
+      timeLeft = roundSeconds;
+      game.reset();
     });
+    startTimer();
   }
 
-  void _answer(bool userChoice) {
-    game.processAnswer(userChoice, 0); // Timer not critical for T/F score in this version
-    
-    if (game.questionIndex >= 20) {
-      _endGame();
+  void loadNextStatement() {
+    stopTimer();
+    setState(() {
+      timeLeft = roundSeconds;
+      buttonsEnabled = true;
+      game.nextQuestion();
+    });
+    startTimer();
+  }
+
+  void submitAnswer(bool playerSaysTrue) {
+    if (!buttonsEnabled || showCongrats) return;
+
+    stopTimer();
+    setState(() => buttonsEnabled = false);
+
+    // ✅ check correctness using the current question (before moving next)
+    final bool correct = (playerSaysTrue == game.current.isTrue);
+
+    game.answer(playerSaysTrue);
+
+    if (correct) {
+      Sfx.correct();
     } else {
-      setState(() {
-         game.generateQuestion();
-      });
+      Sfx.wrong();
+    }
+
+    if (game.reachedTarget()) {
+      Sfx.win();
+      setState(() => showCongrats = true);
+    } else {
+      loadNextStatement(); // this will re-enable buttons
     }
   }
 
-  void _endGame() {
-    setState(() { isGameActive = false; });
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        title: Text("Game Over"),
-        content: Text("You scored ${game.totalScore} / 20"),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context); // Close Dialog
-              Navigator.pop(context); // Back to Menu
-            },
-            child: Text("Back to Menu"),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context); // Close Dialog
-              _showCountdownDialog(); // Restart
-            },
-            child: Text("Play Again"),
-          ),
-        ],
-      ),
-    );
+  void timeUp() {
+    Sfx.timeUp();
+
+    // treat as wrong (simple)
+    game.score -= 1;
+
+    if (game.reachedTarget()) {
+      Sfx.win();
+      setState(() => showCongrats = true);
+    } else {
+      loadNextStatement();
+    }
+  }
+
+  void startTimer() {
+    timer = Timer.periodic(const Duration(seconds: 1), (t) {
+      if (!mounted || showCongrats) {
+        t.cancel();
+        return;
+      }
+
+      if (timeLeft <= 1) {
+        t.cancel();
+        setState(() => timeLeft = 0);
+        timeUp();
+      } else {
+        setState(() => timeLeft -= 1);
+      }
+    });
+  }
+
+  void stopTimer() {
+    timer?.cancel();
+    timer = null;
+  }
+
+  Color _timerColor() {
+    if (timeLeft <= 5) return Colors.red;
+    if (timeLeft <= 10) return Colors.orange;
+    return Colors.green;
   }
 
   @override
   Widget build(BuildContext context) {
-    if (!isGameActive && game.questionIndex == 0) {
-      return Scaffold(backgroundColor: AppTheme.backgroundColor); // Empty while waiting
-    }
-
     return Scaffold(
-      backgroundColor: AppTheme.backgroundColor,
+      backgroundColor: const Color(0xFFF7F7F7),
       appBar: AppBar(
-        title: Text("True / False"),
-        leading: BackButton(),
-        actions: [
-          Center(
-            child: Padding(
-              padding: const EdgeInsets.only(right: 20),
-              child: Text("${game.totalScore} / 20", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87)),
-            ),
-          )
-        ],
+        title: const Text("True / False"),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        foregroundColor: Colors.black,
       ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text("Question ${game.questionIndex + 1}", style: GoogleFonts.nunito(fontSize: 20, color: Colors.grey[600])),
-            SizedBox(height: 40),
-            
-            // Question Card
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: 40, vertical: 30),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 10, offset: Offset(0, 5))],
-              ),
-              child: Column(
-                children: [
-                   Text(
-                    "${game.a} ${game.op} ${game.b}",
-                    style: GoogleFonts.nunito(fontSize: 40, fontWeight: FontWeight.bold),
-                  ),
-                  Divider(height: 30, thickness: 2),
-                  Text(
-                    "= ${game.displayedResult}",
-                    style: GoogleFonts.nunito(fontSize: 50, fontWeight: FontWeight.w900, color: AppTheme.primaryColor),
-                  ),
-                ],
-              ),
-            ),
-            
-            SizedBox(height: 60),
+      body: Padding(
+        padding: const EdgeInsets.all(18),
+        child: showCongrats ? _buildCongratsUI() : _buildGameUI(),
+      ),
+    );
+  }
 
-            // Buttons
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _buildButton(false, Colors.redAccent, Icons.close),
-                _buildButton(true, Colors.greenAccent, Icons.check),
-              ],
+  Widget _buildGameUI() {
+    return Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [_timerCircle(), _scoreChip()],
+        ),
+        const SizedBox(height: 18),
+        _questionCard(game.current),
+        const Spacer(),
+        _fullButton(
+          text: "TRUE",
+          color: Colors.green.shade700,
+          onTap: buttonsEnabled ? () => submitAnswer(true) : null,
+        ),
+        const SizedBox(height: 12),
+        _fullButton(
+          text: "FALSE",
+          color: Colors.red.shade700,
+          onTap: buttonsEnabled ? () => submitAnswer(false) : null,
+        ),
+        const SizedBox(height: 12),
+      ],
+    );
+  }
+
+  Widget _buildCongratsUI() {
+    return Center(
+      child: Container(
+        width: 330,
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: const [
+            BoxShadow(color: Colors.black12, blurRadius: 12, offset: Offset(0, 6)),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.check_circle, size: 70, color: Colors.green),
+            const SizedBox(height: 10),
+            const Text(
+              "Congratulations!",
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
+            ),
+            const SizedBox(height: 6),
+            Text("Final Score: ${game.score}", style: const TextStyle(fontSize: 16)),
+            const SizedBox(height: 18),
+            _fullButton(
+              text: "Replay",
+              color: Colors.green.shade700,
+              onTap: restartGame,
+            ),
+            const SizedBox(height: 12),
+            _fullButton(
+              text: "Menu",
+              color: Colors.red.shade700,
+              onTap: () => Navigator.pop(context),
             ),
           ],
         ),
@@ -144,61 +208,81 @@ class _TrueFalsePageState extends State<TrueFalsePage> {
     );
   }
 
-  Widget _buildButton(bool value, Color color, IconData icon) {
-    return SizedBox(
-      width: 100, 
-      height: 100,
-      child: ElevatedButton(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: color,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-          elevation: 5,
+  Widget _timerCircle() {
+    // simple circle + color change
+    return Container(
+      width: 58,
+      height: 58,
+      decoration: BoxDecoration(
+        color: _timerColor().withOpacity(0.20),
+        shape: BoxShape.circle,
+        border: Border.all(color: _timerColor(), width: 2),
+      ),
+      child: Center(
+        child: Text(
+          timeLeft.toString().padLeft(2, "0"),
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
         ),
-        onPressed: () => _answer(value),
-        child: Icon(icon, size: 50, color: Colors.white),
       ),
     );
   }
-}
 
-// Simple Countdown Dialog
-class CountdownDialog extends StatefulWidget {
-  final VoidCallback onComplete;
-  CountdownDialog({required this.onComplete});
-
-  @override
-  _CountdownDialogState createState() => _CountdownDialogState();
-}
-
-class _CountdownDialogState extends State<CountdownDialog> {
-  int count = 3;
-
-  @override
-  void initState() {
-    super.initState();
-    Timer.periodic(Duration(seconds: 1), (timer) {
-      if (mounted) {
-        setState(() {
-          count--;
-        });
-        if (count <= 0) {
-          timer.cancel();
-          Navigator.pop(context);
-          widget.onComplete();
-        }
-      }
-    });
+  Widget _scoreChip() {
+    return Row(
+      children: [
+        const Icon(Icons.monetization_on, color: Color(0xFFFFC107)),
+        const SizedBox(width: 6),
+        Text(
+          "${game.score}",
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+        ),
+      ],
+    );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Dialog(
-      backgroundColor: Colors.transparent,
-      elevation: 0,
-      child: Center(
+  Widget _questionCard(TFStatement s) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: const [
+          BoxShadow(color: Colors.black12, blurRadius: 10, offset: Offset(0, 6)),
+        ],
+      ),
+      child: Column(
+        children: [
+          Icon(s.icon, size: 48, color: Colors.deepPurple),
+          const SizedBox(height: 10),
+          Text(
+            s.text,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _fullButton({
+    required String text,
+    required Color color,
+    required VoidCallback? onTap,
+  }) {
+    return SizedBox(
+      width: double.infinity,
+      height: 54,
+      child: ElevatedButton(
+        onPressed: onTap,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: color,
+          elevation: 6,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        ),
         child: Text(
-          count > 0 ? "$count" : "GO!",
-          style: GoogleFonts.titanOne(fontSize: 100, color: Colors.white, shadows: [Shadow(color: Colors.black45, blurRadius: 10)]),
+          text,
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
       ),
     );

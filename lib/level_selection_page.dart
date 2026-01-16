@@ -81,7 +81,7 @@ class _LevelSelectionPageState extends State<LevelSelectionPage> {
                 mainAxisSpacing: 15,
                 childAspectRatio: 0.8, // Taller to fit stars
               ),
-              itemCount: widget.mode == 'logical' ? 15 : 20,
+              itemCount: widget.mode == 'logical' ? 15 : ((unlockedLevel - 1) ~/ 20 + 1) * 20,
               itemBuilder: (context, index) {
                 int level = index + 1;
                 bool isLocked = level > unlockedLevel;

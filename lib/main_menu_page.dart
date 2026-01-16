@@ -2,19 +2,67 @@ import 'scoreboard_page.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'core/app_theme.dart';
+import 'models/user_model.dart';
+import 'player_storage.dart';
 
 import 'true_false_page.dart';
 import 'level_selection_page.dart';
 import 'settings_page.dart';
 import 'profile_page.dart';
 
-class MainMenuPage extends StatelessWidget {
+class MainMenuPage extends StatefulWidget {
   final String username;
 
   MainMenuPage({required this.username});
 
   @override
+  _MainMenuPageState createState() => _MainMenuPageState();
+}
+
+class _MainMenuPageState extends State<MainMenuPage> {
+  User? _currentUser;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  void _loadUserData() async {
+    User? user = await PlayerRepository().getUser();
+    if (mounted) {
+      setState(() {
+        _currentUser = user;
+        _isLoading = false;
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    // If user data is not loaded yet, use the username passed in and defaults
+    String displayUsername = widget.username;
+    String displayAvatar = '🐼'; // Default
+    int displayStars = 0;
+
+    if (_currentUser != null) {
+      displayUsername = _currentUser!.username;
+      displayAvatar = _currentUser!.avatarId; // This should be the emoji string
+      displayStars = _currentUser!.totalStars;
+      
+      // Fallback if avatarId is a number string (legacy) or '0'
+      if (displayAvatar == '0' || int.tryParse(displayAvatar) != null) {
+         // If it's a number, map it to an emoji or default? 
+         // The ProfilePage logic handles this mapping, but ideally the User model stores the Emoji string directly now.
+         // Based on ProfilePage, it seems it tries to store the emoji itself.
+         // checking ProfilePage logic: 
+         // if (!_avatars.contains(_selectedAvatarId) && _selectedAvatarId != '0') { ... }
+         // We will assume mostly it's an emoji.
+         if(displayAvatar == '0') displayAvatar = '🐼';
+      }
+    }
+
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(
@@ -30,80 +78,91 @@ class MainMenuPage extends StatelessWidget {
               // Top Bar
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                child: Stack(
+                  alignment: Alignment.center,
                   children: [
-                    // Profile Link
-                    GestureDetector(
-                      onTap: () {
-                        // Navigate to Profile
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => ProfilePage(username: username)),
-                        );
-                      },
-                      child: Row(
-                        children: [
-                           CircleAvatar(
-                            backgroundColor: Colors.white,
-                            radius: 20,
-                            child: Icon(Icons.person, color: AppTheme.primaryColor),
-                          ),
-                          SizedBox(width: 8),
-                          Column(
-                             crossAxisAlignment: CrossAxisAlignment.start,
-                             children: [
-                               Text(
-                                username,
-                                style: TextStyle(
-                                  fontSize: 16, 
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFF5A5A5A),
+                    // Left: Profile
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Container(
+                        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.4), // constrain width to avoid overlap
+                        child: GestureDetector(
+                          onTap: () async {
+                             await Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => ProfilePage(username: widget.username)),
+                            );
+                            _loadUserData(); 
+                          },
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              CircleAvatar(
+                                backgroundColor: Colors.white,
+                                radius: 20,
+                                child: Text(displayAvatar, style: TextStyle(fontSize: 24)),
+                              ),
+                              SizedBox(width: 8),
+                              Flexible(
+                                child: Column(
+                                   crossAxisAlignment: CrossAxisAlignment.start,
+                                   mainAxisSize: MainAxisSize.min,
+                                   children: [
+                                     Text(
+                                      displayUsername,
+                                      style: TextStyle(
+                                        fontSize: 16, 
+                                        fontWeight: FontWeight.bold,
+                                        color: Color(0xFF5A5A5A),
+                                      ),
+                                      maxLines: 1, 
+                                      overflow: TextOverflow.ellipsis,
+                                     ),
+                                     Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(Icons.emoji_events, color: Colors.amber, size: 16), // Changed Star to Trophy
+                                        SizedBox(width: 4),
+                                        Text(
+                                          "$displayStars",
+                                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                                        ),
+                                      ],
+                                     ),
+                                   ]
                                 ),
-                               ),
-                               Row(
-                                children: [
-                                  Icon(Icons.emoji_events, color: Colors.amber, size: 16),
-                                  SizedBox(width: 4),
-                                  Text(
-                                    "0",
-                                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-                                  ),
-                                ],
-                               ),
-                             ]
-                          )
-                        ],
+                              )
+                            ],
+                          ),
+                        ),
                       ),
                     ),
-                    
-                    // Scoreboard Button
-                    GestureDetector(
-                      onTap: () {
-                         Navigator.push(context, MaterialPageRoute(builder: (context) => ScoreboardPage(currentUsername: username)));
-                      },
-                      child: Container(
-                        padding: EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.5),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(Icons.emoji_events, size: 28, color: Colors.amber),
+
+                    // Center: Trophy Icon (Decorative)
+                    Container(
+                      padding: EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.5),
+                        shape: BoxShape.circle,
                       ),
+                      child: Icon(Icons.emoji_events, size: 28, color: Colors.amber),
                     ),
                     
-                    // Settings Button
-                    GestureDetector(
-                      onTap: () {
-                         Navigator.push(context, MaterialPageRoute(builder: (context) => SettingsPage()));
-                      },
-                      child: Container(
-                        padding: EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.5),
-                          shape: BoxShape.circle,
+                    // Right: Settings
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: GestureDetector(
+                        onTap: () {
+                           Navigator.push(context, MaterialPageRoute(builder: (context) => SettingsPage()));
+                        },
+                        child: Container(
+                          padding: EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.5),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(Icons.settings, size: 28, color: Color(0xFF5A5A5A)),
                         ),
-                        child: Icon(Icons.settings, size: 28, color: Color(0xFF5A5A5A)),
                       ),
                     ),
                   ],
@@ -169,7 +228,7 @@ class MainMenuPage extends StatelessWidget {
                       description: "Solve simple math problems quickly.",
                       color: AppTheme.primaryColor, // Pink
                       icon: Icons.timer_outlined,
-                      destination: LevelSelectionPage(mode: 'quick', username: username),
+                      destination: LevelSelectionPage(mode: 'quick', username: widget.username),
                     ),
                     SizedBox(height: 16),
                     _buildCategoryCard(
@@ -178,7 +237,7 @@ class MainMenuPage extends StatelessWidget {
                       description: "Find the missing pattern.",
                       color: AppTheme.accentColor, // Blue
                       icon: Icons.lightbulb_outline,
-                      destination: LevelSelectionPage(mode: 'logical', username: username),
+                      destination: LevelSelectionPage(mode: 'logical', username: widget.username),
                     ),
                     SizedBox(height: 16),
                     _buildCategoryCard(
@@ -210,9 +269,10 @@ class MainMenuPage extends StatelessWidget {
     Widget? destination,
   }) {
     return GestureDetector(
-      onTap: () {
+      onTap: () async {
         if (destination != null) {
-          Navigator.push(context, MaterialPageRoute(builder: (context) => destination));
+          await Navigator.push(context, MaterialPageRoute(builder: (context) => destination));
+          _loadUserData(); // Refresh stars when returning from game
         }
       },
       child: Container(

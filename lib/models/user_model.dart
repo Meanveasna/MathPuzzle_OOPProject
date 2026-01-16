@@ -27,6 +27,16 @@ class User {
     totalScore = score;
   }
 
+  int get totalStars {
+    int starsCount = 0;
+    levelStars.forEach((mode, levels) {
+      levels.forEach((lvl, stars) {
+        starsCount += stars;
+      });
+    });
+    return starsCount;
+  }
+
   // =========================
   // SHARED PREFERENCES SUPPORT
   // =========================

@@ -16,8 +16,7 @@ class _ProfilePageState extends State<ProfilePage> {
   User? _currentUser;
   bool _isLoading = true;
   String _selectedAvatarId = '0';
-
-  // Predefined Avatars (Emojis)
+  
   final List<String> _avatars = [
     '🐼', '🦊', '🦁', '🐯', '🐸', '🐨', 
     '🦄', '🐲', '👾', '🤖', '👻', '👽',
@@ -36,16 +35,11 @@ class _ProfilePageState extends State<ProfilePage> {
        setState(() {
          _currentUser = user;
          _selectedAvatarId = user.avatarId;
-         // Ensure valid avatar
          if (!_avatars.contains(_selectedAvatarId) && _selectedAvatarId != '0') {
-           // If it's a file path or unknown, default to first or keep if we supported custom images
-           // For this "Kahoot style", we force emoji. If it was a path, we reset.
-           // However, let's try to parse if it's an int index just in case.
            int? idx = int.tryParse(_selectedAvatarId);
            if (idx != null && idx >= 0 && idx < _avatars.length) {
               _selectedAvatarId = _avatars[idx];
            } else {
-             // Default
              if (!_avatars.contains(_selectedAvatarId)) _selectedAvatarId = _avatars[0];
            }
          }
@@ -87,7 +81,7 @@ class _ProfilePageState extends State<ProfilePage> {
               radius: 60,
               backgroundColor: Colors.white,
               child: Text(
-                _selectedAvatarId.isNotEmpty ? _selectedAvatarId : '😊',
+                _selectedAvatarId.isNotEmpty ? _selectedAvatarId : '🐼',
                 style: TextStyle(fontSize: 60),
               ),
             ),

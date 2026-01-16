@@ -48,6 +48,7 @@ class _PlayLevelScreenState extends State<PlayLevelScreen> {
   String message = '';
 
   void appendDigit(String digit) {
+    if (controller.text.length >= 5) return;
     setState(() {
       controller.text += digit;
     });
@@ -88,6 +89,7 @@ class _PlayLevelScreenState extends State<PlayLevelScreen> {
     } else {
       setState(() {
         message = "Wrong answer! Try again.";
+        controller.clear();
       });
     }
   }
@@ -254,7 +256,7 @@ class CongratsScreen extends StatelessWidget {
     bool finishedAll = nextLevel > 15;
 
     return Scaffold(
-      appBar: AppBar(title: Text('Congratulations!')),
+      appBar: AppBar(title: Text('Congratulations!'), automaticallyImplyLeading: false,centerTitle: true),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,

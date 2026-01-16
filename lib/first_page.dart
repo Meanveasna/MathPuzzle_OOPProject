@@ -29,13 +29,13 @@ class _FirstPageState extends State<FirstPage>
     );
     _animController.forward();
 
-    _checkExistingUser(); // ⚡ check for saved user
+    _checkExistingUser(); 
   }
 
   void _checkExistingUser() async {
     User? user = await PlayerRepository().getUser();
     if (user != null) {
-      // User already exists → skip FirstPage
+      // User already exists -> skip FirstPage
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
@@ -52,11 +52,6 @@ class _FirstPageState extends State<FirstPage>
       _usernameController.dispose();
       super.dispose();
     }
-
-    /// ----------------------------
-    /// SHARED PREFERENCES LOGIC
-    /// ----------------------------
-
     Future<bool> _checkUser(String username) async {
       final prefs = await SharedPreferences.getInstance();
       return prefs.containsKey('user_$username');
@@ -65,7 +60,6 @@ class _FirstPageState extends State<FirstPage>
     Future<void> _createUser(String username) async {
       final prefs = await SharedPreferences.getInstance();
 
-      // default user data
       final Map<String, dynamic> userData = {
         'username': username,
         'avatarId': '0',
@@ -82,17 +76,22 @@ class _FirstPageState extends State<FirstPage>
       final prefs = await SharedPreferences.getInstance();
       prefs.setString('current_user', username);
     }
-
-    /// ----------------------------
-    /// START BUTTON HANDLER
-    /// ----------------------------
-
     void _handleStart() async {
     String username = _usernameController.text.trim();
     if (username.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Please enter your username'),
+          backgroundColor: AppTheme.errorColor,
+        ),
+      );
+      return;
+    }
+
+    if (username.length > 10) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Please input valid name.'),
           backgroundColor: AppTheme.errorColor,
         ),
       );
@@ -109,11 +108,6 @@ class _FirstPageState extends State<FirstPage>
       ),
     );
   }
-
-
-  /// ----------------------------
-  /// UI (UNCHANGED)
-  /// ----------------------------
 
   @override
   Widget build(BuildContext context) {

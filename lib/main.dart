@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'first_page.dart';
+import 'core/sfx.dart';
 import 'core/app_theme.dart';
 import 'settings_page.dart';
 import 'main_menu_page.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  Sfx.init();
   runApp(MyApp());
 }
 

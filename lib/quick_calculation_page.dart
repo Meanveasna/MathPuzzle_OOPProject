@@ -4,6 +4,7 @@ import 'games/quick_calculation_game.dart';
 import 'core/app_theme.dart';
 import 'models/user_model.dart';
 import 'player_storage.dart';
+import 'core/sfx.dart';
 
 class QuickCalculationPage extends StatefulWidget {
   final int level;
@@ -15,30 +16,12 @@ class QuickCalculationPage extends StatefulWidget {
   _QuickCalculationPageState createState() => _QuickCalculationPageState();
 }
 
+//Decides mode (addition, subtraction, multiplication, division) and title based on level
+//The object that can hold the data created from createState()
 class _QuickCalculationPageState extends State<QuickCalculationPage> {
-  // Determine mode based on level
-  int _getModeFromLevel() {
-    if (widget.level <= 5) return 1;
-    if (widget.level <= 10) return 2;
-    if (widget.level <= 15) return 3;
-    return 5;
-  }
-  
-  String _getTitle() {
-    int m = _getModeFromLevel();
-    switch(m) {
-      case 1: return "Addition (Lvl ${widget.level})";
-      case 2: return "Subtraction (Lvl ${widget.level})";
-      case 3: return "Multiplication (Lvl ${widget.level})";
-      default: return "Review (Lvl ${widget.level})";
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return QuickCalculationScreen(
-      mode: _getModeFromLevel(), 
-      modeName: _getTitle(), 
       initialLevel: widget.level,
       username: widget.username,
     );
@@ -46,14 +29,10 @@ class _QuickCalculationPageState extends State<QuickCalculationPage> {
 }
 
 class QuickCalculationScreen extends StatefulWidget {
-  final int mode;
-  final String modeName;
   final int initialLevel;
   final String username;
 
   QuickCalculationScreen({
-    required this.mode, 
-    required this.modeName, 
     required this.initialLevel,
     required this.username,
   });
@@ -61,16 +40,14 @@ class QuickCalculationScreen extends StatefulWidget {
   @override
   _QuickCalculationScreenState createState() => _QuickCalculationScreenState();
 }
-
+//Handles actual gameplay UI: question, timer, keypad, input
 class _QuickCalculationScreenState extends State<QuickCalculationScreen> with TickerProviderStateMixin {
-  late QuickCalculationGame game;
-  final TextEditingController answerController = TextEditingController();
+  late QuickCalculationGame game; //The page owns a game object
+  String currentInput = "";
 
-  int secondsLeft = 20;
+  int secondsLeft = 10;
   bool showResult = false;
-  Timer? timer;
-  late AnimationController _timerAnimController;
-  Color _timerColor = Colors.green;
+  Timer? timer; //we need the nullable type since when the state first created, timer is not started yet. To prevent it run in background.
   
   int correctCount = 0;
   int earnedStars = 0;
@@ -80,46 +57,92 @@ class _QuickCalculationScreenState extends State<QuickCalculationScreen> with Ti
     super.initState();
     game = QuickCalculationGame(widget.initialLevel);
     game.start();
-    _timerAnimController = AnimationController(vsync: this, duration: Duration(seconds: 20));
-    _timerAnimController.reverse(from: 1.0);
     startTimer();
   }
 
   void startTimer() {
-    timer?.cancel();
-    secondsLeft = 20;
-    _timerAnimController.duration = Duration(seconds: 20);
-    _timerAnimController.reverse(from: 1.0);
+    timer?.cancel(); //timer is the Timer object created from Timer periodic. is to stop any existing timer before starting a new one.
+    secondsLeft = 10;
     
-    timer = Timer.periodic(Duration(seconds: 1), (t) {
-      if (mounted) {
+    //after 1 second run callback
+    timer = Timer.periodic(Duration(seconds: 1), (t) { 
+      if (mounted) { //mounted: to navigated away so that the time will not decrease by one. It'll stop.
         setState(() {
           secondsLeft--;
-          if (secondsLeft <= 5) _timerColor = Colors.red;
-          else if (secondsLeft <= 10) _timerColor = Colors.orange;
-          else _timerColor = Colors.green;
         });
       }
       if (secondsLeft <= 0) {
         t.cancel();
-        processAnswer(null);
+        processAnswer(null); // Timeout
       }
     });
   }
 
+  //Keypad Logic and input validation
+  void appendDigit(String digit) {
+    if (currentInput.length < 6) { 
+      setState(() {
+        currentInput += digit; //add new digit to the end of teh current input
+      });
+      _checkInput();
+    }
+  }
+
+  void deleteDigit() {
+    if (currentInput.isNotEmpty) {
+      setState(() {
+        currentInput = currentInput.substring(0, currentInput.length - 1);
+      });
+    }
+  }
+
+  void clearInput() {
+    setState(() {
+      currentInput = "";
+    });
+  }
+
+  void _checkInput() {
+    int? val = int.tryParse(currentInput);
+    if (val != null && val == game.getCorrectAnswer()) { 
+       processAnswer(currentInput);
+    } 
+  }
+
   void processAnswer(String? input) {
+    timer?.cancel();
     int score = game.processAnswer(input, secondsLeft);
-    if (score > 0) correctCount++;
+    if (score > 0) {
+      correctCount++;
+      // Check for early unlock (at 5 correct answers = 1 star)
+      if (correctCount == 5) {
+        _unlockNextLevel();
+      }
+    }
 
     if (game.questionIndex >= 10) {
-      timer?.cancel();
       _finishLevel();
     } else {
-      answerController.clear();
+      currentInput = "";
       game.generateQuestion();
       startTimer();
     }
     if (mounted) setState(() {});
+  }
+
+
+
+  // Early unlock of the next level
+  // Early unlock of the next level
+  void _unlockNextLevel() async {
+    User? user = await PlayerRepository().getUser();
+    if (user != null) {
+      int currentMaxLevel = user.levels['quick'] ?? 1;
+      if (widget.initialLevel >= currentMaxLevel) {
+        user.levels['quick'] = widget.initialLevel + 1;
+        await PlayerRepository().updateUser(user);
+      }
+    }
   }
 
   void _finishLevel() async {
@@ -129,10 +152,8 @@ class _QuickCalculationScreenState extends State<QuickCalculationScreen> with Ti
     else if (correctCount >= 5) earnedStars = 1;
     else earnedStars = 0;
 
-    // Save Logic
     User? user = await PlayerRepository().getUser();
     if (user != null) {
-      // Update Stars
       var quickStars = user.levelStars['quick'] ?? {};
       int currentStars = quickStars['${widget.initialLevel}'] ?? 0;
       if (earnedStars > currentStars) {
@@ -140,17 +161,13 @@ class _QuickCalculationScreenState extends State<QuickCalculationScreen> with Ti
         user.levelStars['quick'] = quickStars;
       }
       
-      // Unlock Next Level
       if (earnedStars >= 1) {
         int currentMaxLevel = user.levels['quick'] ?? 1;
         if (widget.initialLevel >= currentMaxLevel) {
           user.levels['quick'] = widget.initialLevel + 1;
         }
       }
-      
-      // Update Total Score
       user.calculateTotalScore();
-      
       await PlayerRepository().updateUser(user);
     }
     
@@ -162,17 +179,194 @@ class _QuickCalculationScreenState extends State<QuickCalculationScreen> with Ti
   @override
   void dispose() {
     timer?.cancel();
-    _timerAnimController.dispose();
-    answerController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    //If the level finished, show result screen. Else show game screen
     if (showResult) {
-      return Scaffold(
+       return _buildResultScreen();
+    }
+
+    return Scaffold(
+      backgroundColor: Color(0xFFE3F2FD), // Light blue bg
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Header
+            Padding( 
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                   IconButton(
+                     icon: Icon(Icons.arrow_back_ios_new, color: Colors.black87),
+                     onPressed: () => Navigator.pop(context),
+                   ),
+                   Text(
+                     "Calculator", 
+                     style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.black87)
+                   ),
+                   Row(
+                     children: [
+                       Icon(Icons.lightbulb_outline, color: Colors.black54),
+                       //SizedBox(width: 10),
+                       Icon(Icons.pause_circle_outline, color: Colors.black54),
+                     ],
+                   )
+                ],
+              ),
+            ),
+            
+            Expanded(
+              child: Column(
+                children: [
+                  Container(
+                    margin: EdgeInsets.symmetric(horizontal: 16),
+                    padding: EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: Color(0xFFFF8FA3), // Pinkish
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                    child: Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text("Level : ${widget.initialLevel}", style: TextStyle(fontSize: 18, color: Colors.black87)),
+                            //Time UI (Circular bottom, Text Top)
+                            Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                SizedBox(
+                                  width: 60, height: 60,
+                                  child: CircularProgressIndicator(
+                                    value: secondsLeft / 10,
+                                    valueColor: AlwaysStoppedAnimation(Colors.white),
+                                    backgroundColor: Colors.white24,
+                                    strokeWidth: 6, 
+                                  ),
+                                ),
+                                Text("$secondsLeft", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18))
+                              ],
+                            ),
+                            Column(
+                               crossAxisAlignment: CrossAxisAlignment.end,
+                               children: [
+                                 Text("Coin : 0", style: TextStyle(fontSize: 16)), // Placeholder
+                                 Text("🏆 $correctCount", style: TextStyle(fontSize: 16)),
+                               ],
+                            )
+                          ],
+                        ),
+                        SizedBox(height: 20),
+                        // Question
+                        Text(
+                          "${game.a} ${game.operator} ${game.b}",
+                          style: TextStyle(fontSize: 48, fontWeight: FontWeight.bold, color: Colors.black87),
+                        ),
+                        SizedBox(height: 20),
+                        // Answer Box
+                        Container(
+                          width: double.infinity,
+                          padding: EdgeInsets.symmetric(vertical: 15),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(15),
+                            border: Border.all(color: Colors.black87, width: 2)
+                          ),
+                          child: Center(
+                            child: Text(
+                               currentInput.isEmpty ? "?" : currentInput,
+                               style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        )
+                      ],
+                    ),
+                  ),
+                  Spacer(),
+                  // Keypad
+                  _buildKeypad(),
+                  SizedBox(height: 20),
+                ],
+              ),
+            )
+          ],
+        ),
+      ),
+    );
+  }
+  
+  Widget _buildKeypad() {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 30),
+      child: Column(
+        children: [
+          _buildKeypadRow(['7', '8', '9']),
+          SizedBox(height: 15),
+          _buildKeypadRow(['4', '5', '6']),
+          SizedBox(height: 15),
+          _buildKeypadRow(['1', '2', '3']),
+          SizedBox(height: 15),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              _buildKeypadButton("Clear", isFunction: true, onTap: clearInput),
+              _buildKeypadButton("0", onTap: () => appendDigit("0")),
+              _buildKeypadButton("⌫", isFunction: true, isIcon: true, onTap: deleteDigit),
+            ],
+          )
+        ],
+      ),
+    );
+  }
+
+  Widget _buildKeypadRow(List<String> labels) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: labels.map((l) => _buildKeypadButton(l, onTap: () => appendDigit(l))).toList(),
+    );
+  }
+  
+  Widget _buildKeypadButton(String label, {bool isFunction = false, bool isIcon = false, required VoidCallback onTap}) {
+    
+    Color bgColor = isFunction ? Colors.white : Color(0xFFFF6B6B); // Reddish for numbers
+    Color textColor = Colors.black;
+    
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 75,
+        height: 75,
+        decoration: BoxDecoration(
+          color: bgColor,
+          shape: BoxShape.circle,
+          border: isFunction ? Border.all(color: Colors.black, width: 1) : null,
+          boxShadow: [
+             BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 2))
+          ]
+        ),
+        alignment: Alignment.center,
+        child: isIcon 
+           ? Icon(Icons.backspace_outlined, size: 28)
+           : Text(
+               label, 
+               style: TextStyle(
+                 fontSize: label.length > 2 ? 18 : 32, 
+                 fontWeight: FontWeight.bold,
+                 color: textColor
+               )
+             ),
+      ),
+    );
+  }
+
+  Widget _buildResultScreen() {
+    return Scaffold(
         backgroundColor: AppTheme.backgroundColor,
-        appBar: AppBar(title: Text('Level Complete')),
+        appBar: AppBar(title: Text('Calculator')),
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -222,82 +416,5 @@ class _QuickCalculationScreenState extends State<QuickCalculationScreen> with Ti
           ),
         ),
       );
-    }
-
-    return Scaffold(
-      backgroundColor: AppTheme.backgroundColor,
-      appBar: AppBar(title: Text('${widget.modeName}')),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.all(20),
-        child: Column(
-          children: [
-            LinearProgressIndicator(
-              value: (game.questionIndex) / 10,
-              backgroundColor: Colors.grey[300],
-              valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryColor),
-              minHeight: 10,
-              borderRadius: BorderRadius.circular(5),
-            ),
-            SizedBox(height: 10),
-            Text('Question ${game.questionIndex + 1} / 10', style: TextStyle(fontSize: 18, color: Colors.grey[600])),
-            SizedBox(height: 40),
-            Stack(
-              alignment: Alignment.center,
-              children: [
-                SizedBox(
-                  width: 150,
-                  height: 150,
-                  child: CircularProgressIndicator(
-                    value: secondsLeft / 20,
-                    strokeWidth: 10,
-                    valueColor: AlwaysStoppedAnimation<Color>(_timerColor),
-                    backgroundColor: Colors.grey[200],
-                  ),
-                ),
-                Text(
-                  '$secondsLeft',
-                  style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold, color: _timerColor),
-                ),
-              ],
-            ),
-            SizedBox(height: 40),
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: 40, vertical: 20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 10, offset: Offset(0, 5))],
-              ),
-              child: Text(
-                '${game.a} ${game.operator} ${game.b} = ?',
-                style: TextStyle(fontSize: 48, fontWeight: FontWeight.bold, color: Colors.black87),
-              ),
-            ),
-            SizedBox(height: 40),
-            TextField(
-              controller: answerController,
-              keyboardType: TextInputType.number,
-              style: TextStyle(fontSize: 24),
-              textAlign: TextAlign.center,
-              decoration: InputDecoration(
-                hintText: 'Answer',
-                fillColor: Colors.white,
-              ),
-              onSubmitted: (value) => processAnswer(value),
-              autofocus: true,
-            ),
-            SizedBox(height: 20),
-            SizedBox(
-              width: double.infinity,
-              height: 55,
-              child: ElevatedButton(
-                child: Text('SUBMIT'),
-                onPressed: () => processAnswer(answerController.text),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 }

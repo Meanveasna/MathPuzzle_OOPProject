@@ -9,8 +9,9 @@ class QuickCalculationGame extends PuzzleGame {
   int b = 0;
   String operator = '+';
   int _correctAnswer = 0;
+  int getCorrectAnswer() => _correctAnswer;
   
-  QuickCalculationGame(this.level); // Mode derived from level
+  QuickCalculationGame(this.level); 
 
   @override
   void start() {
@@ -21,24 +22,13 @@ class QuickCalculationGame extends PuzzleGame {
 
   @override
   void generateQuestion() {
-    // Level Logic:
-    // 1: Add, 2: Sub, 3: Mul, 4: Div, 5,6,7..: Mix/Cycle or mapped
-    // Requirement:
-    // L1: Add (1-10)
-    // L2: Sub
-    // L3: Mul
-    // L4: Div
-    // L5: Mix
-    // L6+: Repeat but harder
+    int cycle = (level - 1) % 5; //cycle is the number to tells the program which operator to use for each level.
+    int difficulty = (level - 1) ~/ 5; //increase every 5 levels, used to make numbers bigger for higher levels.
     
-    int cycle = (level - 1) % 5; // 0=Add, 1=Sub, 2=Mul, 3=Div, 4=Mix
-    int difficulty = (level - 1) ~/ 5; // Increases every 5 levels
+    int maxNumber = 10 + (difficulty * 10); 
     
-    int maxNumber = 10 + (difficulty * 10); // 10, 20, 30...
-    
-    // Determine operator
+    //pick the operator
     if (cycle == 4) {
-       // Mix
        List<String> ops = ['+', '-', '*', '/'];
        operator = ops[_rand.nextInt(4)];
     } else {
@@ -48,17 +38,15 @@ class QuickCalculationGame extends PuzzleGame {
        else if (cycle == 3) operator = '/';
     }
 
-    a = _rand.nextInt(maxNumber) + 1;
+    a = _rand.nextInt(maxNumber) + 1; //+1 to ensure no zero
     b = _rand.nextInt(maxNumber) + 1;
 
     if (operator == '/') {
-      // Clean division
-      b = _rand.nextInt(maxNumber ~/ 2 + 1) + 1;
-      if (b > 10 + difficulty * 2) b = 10; // Keep divisor reasonable
+      b = _rand.nextInt(maxNumber ~/ 2 + 1) + 1;//generates the divisor integer between 0 and maxNumber/2
+      if (b > 10 + difficulty * 2) b = 10; //
       a = b * (_rand.nextInt(10) + 1);
       _correctAnswer = a ~/ b;
     } else if (operator == '*') {
-       // Smaller numbers for multiply
        int limit = (maxNumber > 12) ? 12 : maxNumber; 
        a = _rand.nextInt(limit) + 1;
        b = _rand.nextInt(limit) + 1;
@@ -66,7 +54,6 @@ class QuickCalculationGame extends PuzzleGame {
     } else if (operator == '+') {
       _correctAnswer = a + b;
     } else if (operator == '-') {
-      // Ensure positive result for early levels? User didn't specify, but safer.
       if (a < b) { int temp = a; a = b; b = temp; }
       _correctAnswer = a - b;
     }
@@ -76,7 +63,7 @@ class QuickCalculationGame extends PuzzleGame {
   int processAnswer(dynamic input, int secondsLeft) {
     int score = 0;
     if (input != null && input.toString().isNotEmpty) {
-      int? ans = int.tryParse(input.toString());
+      int? ans = int.tryParse(input.toString()); //tryParse might fail if the input is not a valid number so we need to use int? (?) mean nullable
       if (ans == _correctAnswer) {
         if (secondsLeft > 15) score = 3;
         else if (secondsLeft > 10) score = 2;
@@ -90,6 +77,5 @@ class QuickCalculationGame extends PuzzleGame {
 
   @override
   void dispose() {
-    // No specific resources to dispose in this logic-only class
   }
 }
