@@ -1,12 +1,33 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 
+enum TFQuestionType {
+  mathOp,
+  percentOf,
+  square,
+  algebraProblem,
+  rectangleAreaProblem,
+  circleAreaProblem,
+  formulaAreaCircle,
+  formulaAreaRect,
+  formulaPerimeterRect,
+  formulaAreaTriangle,
+  custom, // fallback
+}
+
 class TFStatement {
-  final String text;
+  // Instead of a single text, we store type + params so UI can localize
+  final TFQuestionType type;
+  final Map<String, dynamic> params;
+  
+  // Keep text for fallback or debug, but UI should prefer using type+params
+  final String text; // English default
   final bool isTrue;
   final IconData icon;
 
   const TFStatement({
+    required this.type,
+    this.params = const {},
     required this.text,
     required this.isTrue,
     required this.icon,
@@ -46,6 +67,8 @@ class TFStatementGenerator {
     int shown = makeTrue ? correct : correct + pickOffset(difficulty);
 
     return TFStatement(
+      type: TFQuestionType.mathOp,
+      params: {'a': a, 'b': b, 'c': c, 'shown': shown},
       text: "$a + $b × $c = $shown",
       isTrue: makeTrue,
       icon: Icons.calculate,
@@ -63,6 +86,8 @@ class TFStatementGenerator {
     int shown = makeTrue ? correct : correct + pickOffset(difficulty);
 
     return TFStatement(
+      type: TFQuestionType.percentOf,
+      params: {'p': p, 'base': base, 'shown': shown},
       text: "$p% of $base = $shown",
       isTrue: makeTrue,
       icon: Icons.percent,
@@ -77,6 +102,8 @@ class TFStatementGenerator {
     int shown = makeTrue ? correct : correct + pickOffset(difficulty);
 
     return TFStatement(
+      type: TFQuestionType.square,
+      params: {'n': n, 'shown': shown},
       text: "$n² = $shown",
       isTrue: makeTrue,
       icon: Icons.exposure,
@@ -94,6 +121,8 @@ class TFStatementGenerator {
     int shownX = makeTrue ? x : (x + (rand.nextBool() ? 1 : -1));
 
     return TFStatement(
+      type: TFQuestionType.algebraProblem,
+      params: {'a': a, 'b': b, 'result': result, 'shownX': shownX},
       text: "If ${a}x + $b = $result\nthen x = $shownX",
       isTrue: makeTrue,
       icon: Icons.functions,
@@ -109,6 +138,8 @@ class TFStatementGenerator {
     int shown = makeTrue ? correct : correct + pickOffset(difficulty);
 
     return TFStatement(
+      type: TFQuestionType.rectangleAreaProblem,
+      params: {'l': l, 'w': w, 'shown': shown},
       text: "Rectangle\nL = $l, W = $w\nArea = $shown",
       isTrue: makeTrue,
       icon: Icons.crop_square,
@@ -123,6 +154,8 @@ class TFStatementGenerator {
     int shown = makeTrue ? correct : correct + pickOffset(difficulty);
 
     return TFStatement(
+      type: TFQuestionType.circleAreaProblem,
+      params: {'r': r, 'shown': shown},
       text: "Circle\nr = $r\nArea ≈ $shown",
       isTrue: makeTrue,
       icon: Icons.circle_outlined,
@@ -131,10 +164,30 @@ class TFStatementGenerator {
 
   TFStatement formulaCheck() {
     final list = [
-      const TFStatement(text: "Area of circle = π × r²", isTrue: true, icon: Icons.menu_book),
-      const TFStatement(text: "Area of rectangle = L + W", isTrue: false, icon: Icons.menu_book),
-      const TFStatement(text: "Perimeter of rectangle = 2(L + W)", isTrue: true, icon: Icons.menu_book),
-      const TFStatement(text: "Triangle area = base × height", isTrue: false, icon: Icons.menu_book),
+      const TFStatement(
+        type: TFQuestionType.formulaAreaCircle,
+        text: "Area of circle = π × r²", 
+        isTrue: true, 
+        icon: Icons.menu_book
+      ),
+      const TFStatement(
+        type: TFQuestionType.formulaAreaRect,
+        text: "Area of rectangle = L + W", 
+        isTrue: false, 
+        icon: Icons.menu_book
+      ),
+      const TFStatement(
+        type: TFQuestionType.formulaPerimeterRect,
+        text: "Perimeter of rectangle = 2(L + W)", 
+        isTrue: true, 
+        icon: Icons.menu_book
+      ),
+      const TFStatement(
+        type: TFQuestionType.formulaAreaTriangle,
+        text: "Triangle area = base × height", 
+        isTrue: false, 
+        icon: Icons.menu_book
+      ),
     ];
     return list[rand.nextInt(list.length)];
   }
@@ -153,6 +206,7 @@ class TrueFalseGameState {
   final TFStatementGenerator generator;
   int score = 0;
   TFStatement current = const TFStatement(
+    type: TFQuestionType.custom,
     text: "Loading...",
     isTrue: true,
     icon: Icons.hourglass_bottom,

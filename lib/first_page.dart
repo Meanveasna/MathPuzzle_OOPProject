@@ -4,6 +4,11 @@ import 'player_storage.dart';
 import 'main_menu_page.dart';
 import 'core/app_theme.dart';
 import 'models/user_model.dart';
+import 'package:flutter/services.dart';
+
+
+import 'l10n/app_localizations.dart';
+import 'main.dart'; // For MyApp
 
 class FirstPage extends StatefulWidget {
   @override
@@ -109,8 +114,39 @@ class _FirstPageState extends State<FirstPage>
     );
   }
 
+  Widget _buildLanguageButton(BuildContext context, String label, String flag, Locale locale) {
+    bool isSelected = Localizations.localeOf(context).languageCode == locale.languageCode;
+    return InkWell(
+      onTap: () {
+        MyApp.setLocale(context, locale);
+      },
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? AppTheme.primaryColor : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: AppTheme.primaryColor),
+        ),
+        child: Row(
+          children: [
+            Text(flag, style: TextStyle(fontSize: 24)),
+            SizedBox(width: 8),
+            Text(
+              label,
+              style: TextStyle(
+                color: isSelected ? Colors.white : AppTheme.primaryColor,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(gradient: AppTheme.primaryGradient),
@@ -133,7 +169,7 @@ class _FirstPageState extends State<FirstPage>
                       Text('🧠', style: TextStyle(fontSize: 80)),
                       SizedBox(height: 20),
                       Text(
-                        'MathPuzzle',
+                        l10n.appTitle,
                         style: TextStyle(
                           fontSize: 36,
                           fontWeight: FontWeight.bold,
@@ -147,24 +183,42 @@ class _FirstPageState extends State<FirstPage>
                           ],
                         ),
                       ),
+                      
+                      SizedBox(height: 20),
+                      // Language Selection
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          _buildLanguageButton(context, 'English', '🇺🇸', const Locale('en')),
+                          SizedBox(width: 20),
+                          _buildLanguageButton(context, 'ខ្មែរ', '🇰🇭', const Locale('km')),
+                        ],
+                      ),
+
                       SizedBox(height: 40),
                       TextField(
                         controller: _usernameController,
+                        maxLength: 10,
+                        inputFormatters: [
+                          LengthLimitingTextInputFormatter(10),
+                        ],
                         decoration: InputDecoration(
-                          hintText: 'Enter your username',
+                          hintText: l10n.enterUsername,
                           prefixIcon: Icon(
                             Icons.person,
                             color: AppTheme.primaryColor,
                           ),
+                          counterText: '',
                         ),
                       ),
+
                       SizedBox(height: 30),
                       SizedBox(
                         width: double.infinity,
                         height: 55,
                         child: ElevatedButton(
                           onPressed: _handleStart,
-                          child: Text('START GAME'),
+                          child: Text(l10n.startGame),
                         ),
                       )
                     ],

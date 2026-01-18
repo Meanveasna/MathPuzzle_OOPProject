@@ -4,6 +4,8 @@ import 'games/logical_puzzle_game.dart';
 import 'level_selection_page.dart';
 import 'player_storage.dart';
 import 'models/user_model.dart';
+import 'core/sfx.dart';
+import 'package:mathpuzzlesoop/l10n/app_localizations.dart';
 
 final LogicalPuzzleGame game = LogicalPuzzleGame();
 
@@ -63,7 +65,7 @@ class _PlayLevelScreenState extends State<PlayLevelScreen> {
     }
   }
 
-  Future<void> checkAnswer() async {
+  Future<void> checkAnswer(AppLocalizations l10n) async {
     if (game.isCorrect(widget.levelIndex, controller.text)) {
       int nextUnlockedLevel = widget.levelIndex + 2;
 
@@ -76,8 +78,12 @@ class _PlayLevelScreenState extends State<PlayLevelScreen> {
         }
         await repo.updateUser(user);
       }
+      
+      Sfx.win(); // Play win sound
 
-      Navigator.push(
+      Sfx.win(); // Play win sound
+
+      Navigator.pushReplacement(
         context,
         MaterialPageRoute(
           builder: (_) => CongratsScreen(
@@ -88,7 +94,7 @@ class _PlayLevelScreenState extends State<PlayLevelScreen> {
       );
     } else {
       setState(() {
-        message = "Wrong answer! Try again.";
+        message = l10n.wrongAnswer;
         controller.clear();
       });
     }
@@ -96,41 +102,17 @@ class _PlayLevelScreenState extends State<PlayLevelScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: (didPop, result) {
-        if (!didPop) {
-          Navigator.pushAndRemoveUntil(
-            context,
-            MaterialPageRoute(
-              builder: (_) => LevelSelectionPage(
-                mode: 'logical',
-                username: widget.username,
-              ),
-            ),
-            (route) => false,
-          );
-        }
-      },
-      child: Scaffold(
+    final l10n = AppLocalizations.of(context)!;
+    return Scaffold(
         backgroundColor: backgroundColor, // soft blue background
         appBar: AppBar(
-          title: Text('Level ${widget.levelIndex + 1}'),
+          title: Text(l10n.levelLabel(widget.levelIndex + 1)),
           //backgroundColor: Colors.white,
           foregroundColor: Colors.black, // black text/icon on white appbar
           leading: IconButton(
             icon: Icon(Icons.arrow_back),
             onPressed: () {
-              Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => LevelSelectionPage(
-                    mode: 'logical',
-                    username: widget.username,
-                  ),
-                ),
-                (route) => false,
-              );
+              Navigator.pop(context);
             },
           ),
         ),
@@ -173,7 +155,7 @@ class _PlayLevelScreenState extends State<PlayLevelScreen> {
                         focusedBorder: OutlineInputBorder(
                           borderSide: BorderSide(color: primaryColor, width: 0.5),
                         ),
-                        hintText: 'Enter answer',
+                        hintText: l10n.enterAnswer,
                         //hintStyle: TextStyle(color: primaryColor),
                         errorText: message.isEmpty ? null : message,
                       ),
@@ -223,10 +205,10 @@ class _PlayLevelScreenState extends State<PlayLevelScreen> {
               SizedBox(height: 10),
               ElevatedButton(
                 child: Text(
-                  'Submit',
+                  l10n.submit,
                   style: TextStyle(fontSize: 20, color: Colors.black),
                 ),
-                onPressed: checkAnswer,
+                onPressed: () => checkAnswer(l10n),
                 style: ElevatedButton.styleFrom(
                   //backgroundColor: Colors.white, // white background
                   side: BorderSide(color: primaryColor, width: 0.5), // pink border
@@ -234,7 +216,6 @@ class _PlayLevelScreenState extends State<PlayLevelScreen> {
                 ),
               ),
             ],
-          ),
         ),
       ),
     );
@@ -254,15 +235,16 @@ class CongratsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     bool finishedAll = nextLevel > 15;
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
-      appBar: AppBar(title: Text('Congratulations!'), automaticallyImplyLeading: false,centerTitle: true),
+      appBar: AppBar(title: Text(l10n.congratulations), automaticallyImplyLeading: false,centerTitle: true),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              'Correct! 🎉',
+              l10n.correctAnswer,
               style: TextStyle(
                 fontSize: 30,
                 fontWeight: FontWeight.bold,
@@ -271,7 +253,7 @@ class CongratsScreen extends StatelessWidget {
             SizedBox(height: 20),
             ElevatedButton(
               child: Text(
-                finishedAll ? 'Back to menu' : 'Next Level',
+                finishedAll ? l10n.backToMenu : l10n.nextLevel,
                 style: TextStyle(fontSize: 20),
               ),
               onPressed: () {

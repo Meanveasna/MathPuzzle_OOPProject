@@ -6,6 +6,9 @@ import 'logical_puzzle_page.dart';
 import 'player_storage.dart';
 import 'models/user_model.dart';
 import 'main_menu_page.dart';
+import 'core/sfx.dart';
+
+import 'package:mathpuzzlesoop/l10n/app_localizations.dart';
 
 class LevelSelectionPage extends StatefulWidget {
   final String mode; // 'quick' or 'logical'
@@ -24,6 +27,7 @@ class _LevelSelectionPageState extends State<LevelSelectionPage> {
   @override
   void initState() {
     super.initState();
+    Sfx.stopBgm(); // User requested silence in Level Selection
     _loadUserProgress();
   }
 
@@ -41,7 +45,8 @@ class _LevelSelectionPageState extends State<LevelSelectionPage> {
 
   @override
   Widget build(BuildContext context) {
-    String title = widget.mode == 'quick' ? 'Quick Calculation' : 'Logic Puzzle';
+    final l10n = AppLocalizations.of(context)!;
+    String title = widget.mode == 'quick' ? l10n.playQuick : l10n.playLogical;
     Color themeColor = widget.mode == 'quick' ? AppTheme.primaryColor : AppTheme.accentColor;
 
     return Scaffold(
@@ -53,13 +58,7 @@ class _LevelSelectionPageState extends State<LevelSelectionPage> {
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () {
-            Navigator.pushAndRemoveUntil(
-              context,
-              MaterialPageRoute(
-                builder: (_) => MainMenuPage(username: widget.username),
-              ),
-              (route) => false,
-            );
+            Navigator.pop(context);
           },
 ),
       ),
@@ -68,7 +67,7 @@ class _LevelSelectionPageState extends State<LevelSelectionPage> {
           Padding(
             padding: const EdgeInsets.all(20.0),
             child: Text(
-              "Select Level",
+              l10n.selectLevel,
               style: GoogleFonts.nunito(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.black54),
             ),
           ),
@@ -91,7 +90,7 @@ class _LevelSelectionPageState extends State<LevelSelectionPage> {
                    stars = _currentUser!.levelStars[widget.mode]!['$level'] ?? 0;
                 }
                 
-                return _buildLevelButton(level, isLocked, themeColor, stars);
+                return _buildLevelButton(level, isLocked, themeColor, stars, l10n);
               },
             ),
           ),
@@ -100,14 +99,14 @@ class _LevelSelectionPageState extends State<LevelSelectionPage> {
     );
   }
 
-  Widget _buildLevelButton(int level, bool isLocked, Color color, int stars) {
+  Widget _buildLevelButton(int level, bool isLocked, Color color, int stars, AppLocalizations l10n) {
     return GestureDetector(
       onTap: () {
         if (!isLocked) {
           _navigateToLevel(level);
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("Level $level is locked! Complete previous levels first.")),
+            SnackBar(content: Text(l10n.levelLocked(level))),
           );
         }
       },

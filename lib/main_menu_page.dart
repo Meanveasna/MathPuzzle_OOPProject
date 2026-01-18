@@ -1,4 +1,3 @@
-import 'scoreboard_page.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'core/app_theme.dart';
@@ -10,10 +9,13 @@ import 'level_selection_page.dart';
 import 'settings_page.dart';
 import 'profile_page.dart';
 
+import 'package:mathpuzzlesoop/l10n/app_localizations.dart';
+import 'core/sfx.dart'; // 🔊 SOUND
+
 class MainMenuPage extends StatefulWidget {
   final String username;
 
-  MainMenuPage({required this.username});
+  const MainMenuPage({super.key, required this.username});
 
   @override
   _MainMenuPageState createState() => _MainMenuPageState();
@@ -27,6 +29,13 @@ class _MainMenuPageState extends State<MainMenuPage> {
   void initState() {
     super.initState();
     _loadUserData();
+    Sfx.playMenuBgm(); // 🎵 START MENU MUSIC
+  }
+
+  @override
+  void dispose() {
+    Sfx.stopBgm(); // ⏹ STOP WHEN MENU IS DESTROYED
+    super.dispose();
   }
 
   void _loadUserData() async {
@@ -41,33 +50,27 @@ class _MainMenuPageState extends State<MainMenuPage> {
 
   @override
   Widget build(BuildContext context) {
-    // If user data is not loaded yet, use the username passed in and defaults
     String displayUsername = widget.username;
-    String displayAvatar = '🐼'; // Default
+    String displayAvatar = '🐼';
     int displayStars = 0;
 
     if (_currentUser != null) {
       displayUsername = _currentUser!.username;
-      displayAvatar = _currentUser!.avatarId; // This should be the emoji string
+      displayAvatar = _currentUser!.avatarId;
       displayStars = _currentUser!.totalStars;
-      
-      // Fallback if avatarId is a number string (legacy) or '0'
+
       if (displayAvatar == '0' || int.tryParse(displayAvatar) != null) {
-         // If it's a number, map it to an emoji or default? 
-         // The ProfilePage logic handles this mapping, but ideally the User model stores the Emoji string directly now.
-         // Based on ProfilePage, it seems it tries to store the emoji itself.
-         // checking ProfilePage logic: 
-         // if (!_avatars.contains(_selectedAvatarId) && _selectedAvatarId != '0') { ... }
-         // We will assume mostly it's an emoji.
-         if(displayAvatar == '0') displayAvatar = '🐼';
+        displayAvatar = '🐼';
       }
     }
 
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       body: Container(
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           gradient: LinearGradient(
-            colors: [const Color(0xFFC3E0FF), const Color(0xFFE6D6FF)], // Sky blue to light purple
+            colors: [Color(0xFFC3E0FF), Color(0xFFE6D6FF)],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),
@@ -75,185 +78,58 @@ class _MainMenuPageState extends State<MainMenuPage> {
         child: SafeArea(
           child: Column(
             children: [
-              // Top Bar
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    // Left: Profile
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: Container(
-                        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.4), // constrain width to avoid overlap
-                        child: GestureDetector(
-                          onTap: () async {
-                             await Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (context) => ProfilePage(username: widget.username)),
-                            );
-                            _loadUserData(); 
-                          },
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              CircleAvatar(
-                                backgroundColor: Colors.white,
-                                radius: 20,
-                                child: Text(displayAvatar, style: TextStyle(fontSize: 24)),
-                              ),
-                              SizedBox(width: 8),
-                              Flexible(
-                                child: Column(
-                                   crossAxisAlignment: CrossAxisAlignment.start,
-                                   mainAxisSize: MainAxisSize.min,
-                                   children: [
-                                     Text(
-                                      displayUsername,
-                                      style: TextStyle(
-                                        fontSize: 16, 
-                                        fontWeight: FontWeight.bold,
-                                        color: Color(0xFF5A5A5A),
-                                      ),
-                                      maxLines: 1, 
-                                      overflow: TextOverflow.ellipsis,
-                                     ),
-                                     Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Icon(Icons.emoji_events, color: Colors.amber, size: 16), // Changed Star to Trophy
-                                        SizedBox(width: 4),
-                                        Text(
-                                          "$displayStars",
-                                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-                                        ),
-                                      ],
-                                     ),
-                                   ]
-                                ),
-                              )
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    // Center: Trophy Icon (Decorative)
-                    Container(
-                      padding: EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.5),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(Icons.emoji_events, size: 28, color: Colors.amber),
-                    ),
-                    
-                    // Right: Settings
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: GestureDetector(
-                        onTap: () {
-                           Navigator.push(context, MaterialPageRoute(builder: (context) => SettingsPage()));
-                        },
-                        child: Container(
-                          padding: EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.5),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(Icons.settings, size: 28, color: Color(0xFF5A5A5A)),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              
-              SizedBox(height: 20),
-              
-              // Title "MATH PUZZLES"
-              // Using a stack/shadow for the cartoon 3D effect
-              Stack(
-                children: [
-                  Text(
-                    'MATH\nPUZZLES',
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.titanOne( // Using a chunky font if available, or Nunito with extra bold
-                      fontSize: 50,
-                      fontWeight: FontWeight.w900,
-                      color: Colors.white,
-                      height: 0.9,
-                      shadows: [
-                        Shadow( // Simple outline/depth effect
-                          offset: Offset(0, 5),
-                          blurRadius: 0,
-                          color: Color(0xFF8E99F3),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Text(
-                    'MATH\nPUZZLES',
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.titanOne(
-                      fontSize: 50,
-                      fontWeight: FontWeight.w900,
-                      color: Color(0xFFFFD54F), // Yellowish text face
-                      height: 0.9,
-                    ),
-                  ),
-                ],
-              ),
-              
-              SizedBox(height: 10),
+              _buildTopBar(context, displayUsername, displayAvatar, displayStars),
+              const SizedBox(height: 20),
+              _buildTitle(),
+              const SizedBox(height: 10),
               Text(
-                "Train Your Brain, Improve Your Math Skill",
-                style: TextStyle(
+                l10n.trainBrain,
+                style: const TextStyle(
                   color: Colors.black54,
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              
-              SizedBox(height: 30),
-              
-              // Categories List
+              const SizedBox(height: 30),
               Expanded(
                 child: ListView(
-                  padding: EdgeInsets.symmetric(horizontal: 20),
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
                   children: [
                     _buildCategoryCard(
                       context,
-                      title: "Quick Calculation",
-                      description: "Solve simple math problems quickly.",
-                      color: AppTheme.primaryColor, // Pink
+                      title: l10n.playQuick,
+                      description: l10n.playQuickDesc,
+                      color: AppTheme.primaryColor,
                       icon: Icons.timer_outlined,
-                      destination: LevelSelectionPage(mode: 'quick', username: widget.username),
+                      destination: LevelSelectionPage(
+                        mode: 'quick',
+                        username: widget.username,
+                      ),
                     ),
-                    SizedBox(height: 16),
+                    const SizedBox(height: 16),
                     _buildCategoryCard(
                       context,
-                      title: "Logical Puzzle",
-                      description: "Find the missing pattern.",
-                      color: AppTheme.accentColor, // Blue
+                      title: l10n.playLogical,
+                      description: l10n.playLogicalDesc,
+                      color: AppTheme.accentColor,
                       icon: Icons.lightbulb_outline,
-                      destination: LevelSelectionPage(mode: 'logical', username: widget.username),
+                      destination: LevelSelectionPage(
+                        mode: 'logical',
+                        username: widget.username,
+                      ),
                     ),
-                    SizedBox(height: 16),
+                    const SizedBox(height: 16),
                     _buildCategoryCard(
                       context,
-                      title: "True / False",
-                      description: "Decide if the equation is correct.",
-                      color: AppTheme.purpleColor, // Purple
+                      title: l10n.playTrueFalse,
+                      description: l10n.playTrueFalseDesc,
+                      color: AppTheme.purpleColor,
                       icon: Icons.check_circle_outline,
-                      destination: TrueFalsePage(), 
+                      destination: const TrueFalsePage(),
                     ),
                   ],
                 ),
               ),
-             
-               // Bottom Ad Placeholder or footer
-               SizedBox(height: 20),
             ],
           ),
         ),
@@ -261,7 +137,124 @@ class _MainMenuPageState extends State<MainMenuPage> {
     );
   }
 
-  Widget _buildCategoryCard(BuildContext context, {
+  // ===================== UI HELPERS =====================
+
+  Widget _buildTopBar(
+    BuildContext context,
+    String username,
+    String avatar,
+    int stars,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Align(
+            alignment: Alignment.centerLeft,
+            child: GestureDetector(
+              onTap: () async {
+                Sfx.click();
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) =>
+                        ProfilePage(username: widget.username),
+                  ),
+                );
+                // Music continues playing
+                _loadUserData();
+              },
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    backgroundColor: Colors.white,
+                    radius: 20,
+                    child: Text(avatar, style: const TextStyle(fontSize: 24)),
+                  ),
+                  const SizedBox(width: 8),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(username,
+                          style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold)),
+                      Row(
+                        children: [
+                          const Icon(Icons.emoji_events,
+                              color: Colors.amber, size: 16),
+                          const SizedBox(width: 4),
+                          Text('$stars',
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.bold)),
+                        ],
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // SCOREBOARD
+          // SCOREBOARD (Icon only, no click)
+          const CircleAvatar(
+            backgroundColor: Colors.white70,
+            child: Icon(Icons.emoji_events, color: Colors.amber),
+          ),
+
+          // SETTINGS
+          Align(
+            alignment: Alignment.centerRight,
+            child: GestureDetector(
+              onTap: () {
+                Sfx.click();
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => SettingsPage()),
+                );
+              },
+              child: const CircleAvatar(
+                backgroundColor: Colors.white70,
+                child: Icon(Icons.settings),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTitle() {
+    final l10n = AppLocalizations.of(context)!;
+    return Stack(
+      children: [
+        Text(
+          l10n.mathPuzzlesTitle,
+          textAlign: TextAlign.center,
+          style: GoogleFonts.titanOne(
+            fontSize: 50,
+            color: Colors.white,
+            shadows: const [
+              Shadow(offset: Offset(0, 5), color: Color(0xFF8E99F3)),
+            ],
+          ),
+        ),
+        Text(
+          l10n.mathPuzzlesTitle,
+          textAlign: TextAlign.center,
+          style: GoogleFonts.titanOne(
+            fontSize: 50,
+            color: Color(0xFFFFD54F),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCategoryCard(
+    BuildContext context, {
     required String title,
     required String description,
     required Color color,
@@ -271,72 +264,34 @@ class _MainMenuPageState extends State<MainMenuPage> {
     return GestureDetector(
       onTap: () async {
         if (destination != null) {
-          await Navigator.push(context, MaterialPageRoute(builder: (context) => destination));
-          _loadUserData(); // Refresh stars when returning from game
+          Sfx.click();
+          Sfx.stopBgm();
+          await Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => destination),
+          );
+          Sfx.playMenuBgm();
+          _loadUserData();
         }
       },
       child: Container(
-        height: 140, // Fixed height for consistency
+        height: 140,
         decoration: BoxDecoration(
           color: color,
           borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black12,
-              offset: Offset(0, 8),
-              blurRadius: 0, // Solid shadow for cartoon look
-            )
+          boxShadow: const [
+            BoxShadow(offset: Offset(0, 8), color: Colors.black12),
           ],
         ),
-        child: Stack(
-          children: [
-            Positioned(
-              left: 20,
-              top: 30,
-              child: Container(
-                width: 60,
-                height: 80,
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.3),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: Colors.black87, width: 2),
-                ),
-                child: Icon(icon, size: 40, color: Colors.black87),
-              ),
-            ),
-             Positioned(
-              right: 20,
-              top: 20,
-              bottom: 20,
-              left: 100,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    title,
-                    style: GoogleFonts.nunito(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                      shadows: [Shadow(color: Colors.black26, offset: Offset(1,1))],
-                    ),
-                  ),
-                  SizedBox(height: 5),
-                  Text(
-                    description,
-                    style: GoogleFonts.nunito(
-                      fontSize: 14,
-                      color: Colors.white.withOpacity(0.9),
-                      height: 1.2,
-                    ),
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
-            ),
-          ],
+        child: ListTile(
+          leading: Icon(icon, size: 40, color: Colors.white),
+          title: Text(title,
+              style: GoogleFonts.nunito(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white)),
+          subtitle: Text(description,
+              style: GoogleFonts.nunito(color: Colors.white70)),
         ),
       ),
     );

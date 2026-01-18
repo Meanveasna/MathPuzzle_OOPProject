@@ -6,6 +6,8 @@ import 'models/user_model.dart';
 import 'player_storage.dart';
 import 'core/sfx.dart';
 
+import 'package:mathpuzzlesoop/l10n/app_localizations.dart';
+
 class QuickCalculationPage extends StatefulWidget {
   final int level;
   final String username;
@@ -57,6 +59,7 @@ class _QuickCalculationScreenState extends State<QuickCalculationScreen> with Ti
     super.initState();
     game = QuickCalculationGame(widget.initialLevel);
     game.start();
+    // Loop removed, using Tick instead
     startTimer();
   }
 
@@ -67,12 +70,19 @@ class _QuickCalculationScreenState extends State<QuickCalculationScreen> with Ti
     //after 1 second run callback
     timer = Timer.periodic(Duration(seconds: 1), (t) { 
       if (mounted) { //mounted: to navigated away so that the time will not decrease by one. It'll stop.
+        // Play tick every 2 seconds to match user preference ("delay twice")
+        // Note: secondsLeft decreases AFTER this check.
+        if (secondsLeft % 2 == 0) { 
+          Sfx.playTick(); 
+        }
+
         setState(() {
           secondsLeft--;
         });
       }
       if (secondsLeft <= 0) {
         t.cancel();
+        Sfx.die(); // Play die sound on timeout
         processAnswer(null); // Timeout
       }
     });
@@ -113,6 +123,7 @@ class _QuickCalculationScreenState extends State<QuickCalculationScreen> with Ti
     timer?.cancel();
     int score = game.processAnswer(input, secondsLeft);
     if (score > 0) {
+      Sfx.win2(); // Play win sound for correct answer
       correctCount++;
       // Check for early unlock (at 5 correct answers = 1 star)
       if (correctCount == 5) {
@@ -172,6 +183,7 @@ class _QuickCalculationScreenState extends State<QuickCalculationScreen> with Ti
     }
     
     if (mounted) {
+       Sfx.playCoinSequence(earnedStars); // Play coin sounds
        setState(() { showResult = true; });
     }
   }
@@ -179,14 +191,18 @@ class _QuickCalculationScreenState extends State<QuickCalculationScreen> with Ti
   @override
   void dispose() {
     timer?.cancel();
+    Sfx.stopSfx(); // Stop any long-running sound (like timeup) immediately
+    Sfx.stopGameLoop(); // Ensure background loop context is cleared if any (legacy safety)
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    
     //If the level finished, show result screen. Else show game screen
     if (showResult) {
-       return _buildResultScreen();
+       return _buildResultScreen(l10n);
     }
 
     return Scaffold(
@@ -205,7 +221,7 @@ class _QuickCalculationScreenState extends State<QuickCalculationScreen> with Ti
                      onPressed: () => Navigator.pop(context),
                    ),
                    Text(
-                     "Calculator", 
+                     l10n.calculator, 
                      style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.black87)
                    ),
                    Row(
@@ -234,7 +250,7 @@ class _QuickCalculationScreenState extends State<QuickCalculationScreen> with Ti
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text("Level : ${widget.initialLevel}", style: TextStyle(fontSize: 18, color: Colors.black87)),
+                            Text(l10n.levelLabel(widget.initialLevel), style: TextStyle(fontSize: 18, color: Colors.black87)),
                             //Time UI (Circular bottom, Text Top)
                             Stack(
                               alignment: Alignment.center,
@@ -254,7 +270,7 @@ class _QuickCalculationScreenState extends State<QuickCalculationScreen> with Ti
                             Column(
                                crossAxisAlignment: CrossAxisAlignment.end,
                                children: [
-                                 Text("Coin : 0", style: TextStyle(fontSize: 16)), // Placeholder
+                                 Text("${l10n.coin} : 0", style: TextStyle(fontSize: 16)), // Placeholder
                                  Text("🏆 $correctCount", style: TextStyle(fontSize: 16)),
                                ],
                             )
@@ -288,7 +304,7 @@ class _QuickCalculationScreenState extends State<QuickCalculationScreen> with Ti
                   ),
                   Spacer(),
                   // Keypad
-                  _buildKeypad(),
+                  _buildKeypad(l10n),
                   SizedBox(height: 20),
                 ],
               ),
@@ -299,7 +315,7 @@ class _QuickCalculationScreenState extends State<QuickCalculationScreen> with Ti
     );
   }
   
-  Widget _buildKeypad() {
+  Widget _buildKeypad(AppLocalizations l10n) {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 30),
       child: Column(
@@ -313,7 +329,7 @@ class _QuickCalculationScreenState extends State<QuickCalculationScreen> with Ti
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              _buildKeypadButton("Clear", isFunction: true, onTap: clearInput),
+              _buildKeypadButton(l10n.clear, isFunction: true, onTap: clearInput),
               _buildKeypadButton("0", onTap: () => appendDigit("0")),
               _buildKeypadButton("⌫", isFunction: true, isIcon: true, onTap: deleteDigit),
             ],
@@ -363,10 +379,10 @@ class _QuickCalculationScreenState extends State<QuickCalculationScreen> with Ti
     );
   }
 
-  Widget _buildResultScreen() {
+  Widget _buildResultScreen(AppLocalizations l10n) {
     return Scaffold(
         backgroundColor: AppTheme.backgroundColor,
-        appBar: AppBar(title: Text('Calculator')),
+        appBar: AppBar(title: Text(l10n.calculator)),
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -382,16 +398,16 @@ class _QuickCalculationScreenState extends State<QuickCalculationScreen> with Ti
                 }),
               ),
               SizedBox(height: 20),
-              Text(earnedStars >= 1 ? 'Level Passed!' : 'Level Failed', 
+              Text(earnedStars >= 1 ? l10n.levelPassed : l10n.levelFailed, 
                   style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: earnedStars >= 1 ? Colors.green : Colors.red)),
               SizedBox(height: 10),
-              Text('Correct: $correctCount / 10', style: TextStyle(fontSize: 20)),
+              Text(l10n.correctCountLabel(correctCount, 10), style: TextStyle(fontSize: 20)),
               SizedBox(height: 40),
               
               if (earnedStars >= 1)
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(backgroundColor: Colors.green, padding: EdgeInsets.symmetric(horizontal: 40, vertical: 15)),
-                  child: Text('NEXT LEVEL', style: TextStyle(fontSize: 20)),
+                  child: Text(l10n.nextLevel, style: TextStyle(fontSize: 20)),
                   onPressed: () {
                      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => 
                        QuickCalculationPage(level: widget.initialLevel + 1, username: widget.username)
@@ -401,7 +417,7 @@ class _QuickCalculationScreenState extends State<QuickCalculationScreen> with Ti
                 
               SizedBox(height: 20),
               ElevatedButton(
-                child: Text('RETRY'),
+                child: Text(l10n.retry),
                 onPressed: () {
                   Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => 
                      QuickCalculationPage(level: widget.initialLevel, username: widget.username)
@@ -409,7 +425,7 @@ class _QuickCalculationScreenState extends State<QuickCalculationScreen> with Ti
                 },
               ),
               TextButton(
-                child: Text('Back to Menu'),
+                child: Text(l10n.backToMenu),
                 onPressed: () => Navigator.pop(context),
               ),
             ],
