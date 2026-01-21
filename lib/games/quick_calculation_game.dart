@@ -23,9 +23,9 @@ class QuickCalculationGame extends PuzzleGame {
   @override
   void generateQuestion() {
     int cycle = (level - 1) % 5; //cycle is the number to tells the program which operator to use for each level.
-    int difficulty = (level - 1) ~/ 5; //increase every 5 levels, used to make numbers bigger for higher levels.
+    int difficulty = (level - 1) ~/ 2; //increase every 2 levels, used to make numbers bigger for higher levels.
     
-    int maxNumber = 10 + (difficulty * 10); 
+    int maxNumber = 10 + (difficulty * 10); //Every time difficulty increases, numbers increase by 10
     
     //pick the operator
     if (cycle == 4) {
@@ -43,11 +43,11 @@ class QuickCalculationGame extends PuzzleGame {
 
     if (operator == '/') {
       b = _rand.nextInt(maxNumber ~/ 2 + 1) + 1;//generates the divisor integer between 0 and maxNumber/2
-      if (b > 10 + difficulty * 2) b = 10; //
+      if (b > 10 + difficulty * 2) b = 10; //If b randomly exceeds this “max allowed,” it’s set to 10.
       a = b * (_rand.nextInt(10) + 1);
       _correctAnswer = a ~/ b;
     } else if (operator == '*') {
-       int limit = (maxNumber > 12) ? 12 : maxNumber; 
+       int limit = (maxNumber > 12) ? 12 : maxNumber; //condition ? valueIfTrue : valueIfFalse
        a = _rand.nextInt(limit) + 1;
        b = _rand.nextInt(limit) + 1;
       _correctAnswer = a * b;

@@ -3,6 +3,8 @@ import 'models/user_model.dart';
 import 'player_storage.dart';
 import 'core/app_theme.dart';
 
+import 'l10n/app_localizations.dart';
+
 class ProfilePage extends StatefulWidget {
   final String username;
 
@@ -11,6 +13,8 @@ class ProfilePage extends StatefulWidget {
   @override
   _ProfilePageState createState() => _ProfilePageState();
 }
+final TextEditingController _usernameController = TextEditingController();
+bool _isEditingName = false;
 
 class _ProfilePageState extends State<ProfilePage> {
   User? _currentUser;
@@ -69,9 +73,11 @@ class _ProfilePageState extends State<ProfilePage> {
       return Scaffold(backgroundColor: AppTheme.backgroundColor, body: Center(child: CircularProgressIndicator()));
     }
 
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
-      appBar: AppBar(title: Text('My Profile'), backgroundColor: AppTheme.primaryColor),
+      appBar: AppBar(title: Text(l10n.profile), backgroundColor: AppTheme.primaryColor),
       body: SingleChildScrollView(
         padding: EdgeInsets.all(24),
         child: Column(
@@ -86,10 +92,24 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
             ),
             SizedBox(height: 20),
-            Text(
-              widget.username,
-              style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.black87),
+            
+            // Username with Edit Button
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  _currentUser?.username ?? widget.username,
+                  style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.black87),
+                ),
+                SizedBox(width: 8),
+                IconButton(
+                  icon: Icon(Icons.edit, color: Colors.blueGrey),
+                  tooltip: 'Edit Username',
+                  onPressed: _showEditNameDialog,
+                ),
+              ],
             ),
+            
             SizedBox(height: 10),
             Container(
               padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
@@ -99,13 +119,13 @@ class _ProfilePageState extends State<ProfilePage> {
                 border: Border.all(color: Colors.amber),
               ),
               child: Text(
-                'Total Score: ${_currentUser?.totalScore ?? 0}',
+                '${l10n.totalScore}: ${_currentUser?.totalScore ?? 0}',
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.brown),
               ),
             ),
             
             SizedBox(height: 40),
-            Text("Choose Your Avatar", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.grey[700])),
+            Text(l10n.chooseAvatar, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.grey[700])),
             SizedBox(height: 15),
             
             // Avatar Selector Grid
@@ -155,12 +175,54 @@ class _ProfilePageState extends State<ProfilePage> {
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryColor),
                 onPressed: _saveProfile,
-                child: Text('SAVE CHANGES', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                child: Text(l10n.saveChanges, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
               ),
             ),
           ],
         ),
       ),
     );
+  }
+
+  void _showEditNameDialog() {
+    _usernameController.text = _currentUser?.username ?? '';
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Edit Username'),
+          content: TextField(
+            controller: _usernameController,
+            maxLength: 10, // Max 10 chars, allows special chars/spaces
+            decoration: InputDecoration(hintText: "Enter new name"),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                _updateUsername(_usernameController.text.trim());
+                Navigator.pop(context);
+              },
+              child: Text('Save'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _updateUsername(String newName) async {
+    if (newName.isNotEmpty && _currentUser != null) {
+      setState(() {
+        _currentUser!.username = newName;
+      });
+      // Optionally save immediately or wait for "SAVE CHANGES"; 
+      // User request implies immediate effect or clear "save" for next time.
+      // Saving immediately here ensures name is persisted even if avatar isn't changed.
+      await PlayerRepository().updateUser(_currentUser!);
+    }
   }
 }

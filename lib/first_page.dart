@@ -4,6 +4,9 @@ import 'player_storage.dart';
 import 'main_menu_page.dart';
 import 'core/app_theme.dart';
 import 'models/user_model.dart';
+import 'package:flutter/services.dart';
+import 'l10n/app_localizations.dart';
+import 'main.dart'; 
 
 class FirstPage extends StatefulWidget {
   @override
@@ -81,22 +84,14 @@ class _FirstPageState extends State<FirstPage>
     if (username.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Please enter your username'),
+          content: Text(AppLocalizations.of(context)!.enterUsername), // Fallback or new key
           backgroundColor: AppTheme.errorColor,
         ),
       );
       return;
     }
 
-    if (username.length > 10) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Please input valid name.'),
-          backgroundColor: AppTheme.errorColor,
-        ),
-      );
-      return;
-    }
+    // Length check handled by TextField maxLength
 
     bool isNew = await PlayerRepository().checkUser(username);
 
@@ -109,8 +104,35 @@ class _FirstPageState extends State<FirstPage>
     );
   }
 
+  Widget _buildLanguageToggle(BuildContext context, String label, Locale locale) {
+    bool isSelected = Localizations.localeOf(context).languageCode == locale.languageCode;
+    return InkWell(
+      onTap: () {
+        MyApp.setLocale(context, locale);
+      },
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+        decoration: BoxDecoration(
+          color: isSelected ? AppTheme.primaryColor : Colors.transparent,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: AppTheme.primaryColor, width: 2),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+             color: isSelected ? Colors.white : Colors.black87,
+             fontWeight: FontWeight.bold,
+             fontSize: 16,
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(gradient: AppTheme.primaryGradient),
@@ -133,7 +155,7 @@ class _FirstPageState extends State<FirstPage>
                       Text('🧠', style: TextStyle(fontSize: 80)),
                       SizedBox(height: 20),
                       Text(
-                        'MathPuzzle',
+                        l10n.appTitle, // Localized App Title
                         style: TextStyle(
                           fontSize: 36,
                           fontWeight: FontWeight.bold,
@@ -148,10 +170,22 @@ class _FirstPageState extends State<FirstPage>
                         ),
                       ),
                       SizedBox(height: 40),
+                      // Language Switcher Toggle
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          _buildLanguageToggle(context, 'US English', const Locale('en')),
+                          SizedBox(width: 20),
+                          _buildLanguageToggle(context, 'KH ខ្មែរ', const Locale('km')),
+                        ],
+                      ),
+                      SizedBox(height: 40),
                       TextField(
                         controller: _usernameController,
+                        maxLength: 10,
                         decoration: InputDecoration(
-                          hintText: 'Enter your username',
+                          hintText: l10n.enterUsername, // Localized
+                          counterText: "", // Hide counter if preferred, or keep it. Default shows 0/10
                           prefixIcon: Icon(
                             Icons.person,
                             color: AppTheme.primaryColor,
@@ -164,7 +198,7 @@ class _FirstPageState extends State<FirstPage>
                         height: 55,
                         child: ElevatedButton(
                           onPressed: _handleStart,
-                          child: Text('START GAME'),
+                          child: Text(l10n.startGame), // Localized
                         ),
                       )
                     ],

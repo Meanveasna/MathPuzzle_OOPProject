@@ -5,6 +5,10 @@ import 'core/app_theme.dart';
 import 'core/file_storage.dart';
 import 'first_page.dart';
 import 'player_storage.dart';
+import 'main.dart'; // For MyApp
+import 'core/sfx.dart';
+import 'l10n/app_localizations.dart';
+
 class SettingsPage extends StatefulWidget {
   @override
   _SettingsPageState createState() => _SettingsPageState();
@@ -34,14 +38,15 @@ class _SettingsPageState extends State<SettingsPage> {
     await prefs.setDouble('soundVolume', _soundVolume);
   }
 
-
-
+  // ✅ THIS WAS MISSING
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
       appBar: AppBar(
-        title: Text('Settings'),
+        title: Text(l10n.settings),
         backgroundColor: AppTheme.primaryColor,
       ),
       body: Padding(
@@ -49,74 +54,137 @@ class _SettingsPageState extends State<SettingsPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Audio Settings', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            // 🌍 Language
+            Text(
+              l10n.language,
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 10),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _buildLanguageButton(context, 'English', '🇺🇸', const Locale('en')),
+                _buildLanguageButton(context, 'ខ្មែរ', '🇰🇭', const Locale('km')),
+              ],
+            ),
+
+            Divider(height: 40),
+
+            // 🔊 Audio
+            Text(
+              l10n.audioSettings,
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
             SizedBox(height: 20),
-            
-            // Music Volume
-            _buildVolumeSlider('Music Volume', _musicVolume, (val) {
+
+            _buildVolumeSlider(l10n.musicVolume, _musicVolume, (val) {
               setState(() => _musicVolume = val);
-              _saveSettings();
+              Sfx.setBgmVolume(val); 
             }),
 
-            // Sound Volume
-            _buildVolumeSlider('Sound Effects', _soundVolume, (val) {
+            _buildVolumeSlider(l10n.soundVolume, _soundVolume, (val) {
               setState(() => _soundVolume = val);
-              _saveSettings();
+              Sfx.setSfxVolume(val);
             }),
 
             Divider(height: 40),
-            
-            Text('Game Data', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+
+            // 🗑 Reset
+            Text(
+              l10n.gameData,
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
             SizedBox(height: 20),
 
-            SizedBox(height: 10),
-
             ListTile(
-              title: Text("Reset Progress"),
-              subtitle: Text("Clear all levels and scores"),
+              title: Text(l10n.resetProgress),
+              subtitle: Text(l10n.resetProgress),
               leading: Icon(Icons.delete_forever, color: Colors.red),
+              tileColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
               onTap: () async {
                 bool? confirm = await showDialog<bool>(
                   context: context,
                   builder: (context) => AlertDialog(
-                    title: Text("Reset Game"),
-                    content: Text("Are you sure you want to reset the game? All progress will be lost."),
+                    title: Text(l10n.resetProgress),
+                    content: Text(l10n.confirmExit),
                     actions: [
                       TextButton(
                         onPressed: () => Navigator.pop(context, false),
-                        child: Text("No"),
+                        child: Text(l10n.no),
                       ),
                       TextButton(
                         onPressed: () => Navigator.pop(context, true),
-                        child: Text("Yes", style: TextStyle(color: Colors.red)),
+                        child: Text(
+                          l10n.yes,
+                          style: TextStyle(color: Colors.red),
+                        ),
                       ),
                     ],
                   ),
                 );
 
                 if (confirm == true) {
-                  // Fully reset everything
                   await PlayerRepository().resetAll();
-
-                  // Navigate to FirstPage immediately, clearing all previous routes
                   Navigator.of(context).pushAndRemoveUntil(
                     MaterialPageRoute(builder: (_) => FirstPage()),
-                    (route) => false,
+                    (_) => false,
                   );
                 }
               },
-              tileColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
-
-
           ],
         ),
       ),
     );
   }
 
-  Widget _buildVolumeSlider(String label, double value, Function(double) onChanged) {
+  // ---------- helpers ----------
+
+  Widget _buildLanguageButton(
+    BuildContext context,
+    String label,
+    String flag,
+    Locale locale,
+  ) {
+    bool isSelected =
+        Localizations.localeOf(context).languageCode == locale.languageCode;
+
+    return InkWell(
+      onTap: () {
+        MyApp.setLocale(context, locale);
+      },
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? AppTheme.primaryColor : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: AppTheme.primaryColor),
+        ),
+        child: Row(
+          children: [
+            Text(flag, style: TextStyle(fontSize: 24)),
+            SizedBox(width: 8),
+            Text(
+              label,
+              style: TextStyle(
+                color: isSelected ? Colors.white : AppTheme.primaryColor,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildVolumeSlider(
+    String label,
+    double value,
+    ValueChanged<double> onChanged,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

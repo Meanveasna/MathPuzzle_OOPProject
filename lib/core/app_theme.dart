@@ -15,12 +15,16 @@ class AppTheme {
     end: Alignment.bottomCenter,
   );
 
-  static ThemeData get theme {
+  static ThemeData getTheme(Locale? locale) {
+    bool isKhmer = locale?.languageCode == 'km';
+    String? fontFamily = isKhmer ? GoogleFonts.notoSansKhmer().fontFamily : GoogleFonts.nunito().fontFamily;
+    TextTheme textTheme = isKhmer ? GoogleFonts.notoSansKhmerTextTheme() : GoogleFonts.nunitoTextTheme();
+
     return ThemeData(
       primaryColor: primaryColor,
       scaffoldBackgroundColor: backgroundColor,
-      fontFamily: GoogleFonts.nunito().fontFamily,
-      textTheme: GoogleFonts.nunitoTextTheme(),
+      fontFamily: fontFamily,
+      textTheme: textTheme,
       colorScheme: ColorScheme.fromSwatch().copyWith(
         primary: primaryColor,
         secondary: accentColor,
@@ -30,11 +34,17 @@ class AppTheme {
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
-        titleTextStyle: GoogleFonts.nunito(
-          color: Colors.black87,
-          fontSize: 28,
-          fontWeight: FontWeight.w900,
-        ),
+        titleTextStyle: isKhmer 
+            ? GoogleFonts.notoSansKhmer(
+                color: Colors.black87,
+                fontSize: 28,
+                fontWeight: FontWeight.w900,
+              )
+            : GoogleFonts.nunito(
+                color: Colors.black87,
+                fontSize: 28,
+                fontWeight: FontWeight.w900,
+              ),
         iconTheme: IconThemeData(color: Colors.black87),
       ),
     );

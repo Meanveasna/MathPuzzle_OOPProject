@@ -1,6 +1,7 @@
 import 'scoreboard_page.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'core/sfx.dart';
 import 'core/app_theme.dart';
 import 'models/user_model.dart';
 import 'player_storage.dart';
@@ -9,6 +10,7 @@ import 'true_false_page.dart';
 import 'level_selection_page.dart';
 import 'settings_page.dart';
 import 'profile_page.dart';
+import 'l10n/app_localizations.dart';
 
 class MainMenuPage extends StatefulWidget {
   final String username;
@@ -26,6 +28,7 @@ class _MainMenuPageState extends State<MainMenuPage> {
   @override
   void initState() {
     super.initState();
+    Sfx.playBgm('menu_bg.mp3');
     _loadUserData();
   }
 
@@ -41,6 +44,11 @@ class _MainMenuPageState extends State<MainMenuPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    // Check locale for font switching
+    final locale = Localizations.localeOf(context);
+    final isKhmer = locale.languageCode == 'km';
+
     // If user data is not loaded yet, use the username passed in and defaults
     String displayUsername = widget.username;
     String displayAvatar = '🐼'; // Default
@@ -48,17 +56,10 @@ class _MainMenuPageState extends State<MainMenuPage> {
 
     if (_currentUser != null) {
       displayUsername = _currentUser!.username;
-      displayAvatar = _currentUser!.avatarId; // This should be the emoji string
+      displayAvatar = _currentUser!.avatarId; 
       displayStars = _currentUser!.totalStars;
       
-      // Fallback if avatarId is a number string (legacy) or '0'
       if (displayAvatar == '0' || int.tryParse(displayAvatar) != null) {
-         // If it's a number, map it to an emoji or default? 
-         // The ProfilePage logic handles this mapping, but ideally the User model stores the Emoji string directly now.
-         // Based on ProfilePage, it seems it tries to store the emoji itself.
-         // checking ProfilePage logic: 
-         // if (!_avatars.contains(_selectedAvatarId) && _selectedAvatarId != '0') { ... }
-         // We will assume mostly it's an emoji.
          if(displayAvatar == '0') displayAvatar = '🐼';
       }
     }
@@ -85,7 +86,7 @@ class _MainMenuPageState extends State<MainMenuPage> {
                     Align(
                       alignment: Alignment.centerLeft,
                       child: Container(
-                        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.4), // constrain width to avoid overlap
+                        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.4), 
                         child: GestureDetector(
                           onTap: () async {
                              await Navigator.push(
@@ -121,7 +122,7 @@ class _MainMenuPageState extends State<MainMenuPage> {
                                      Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        Icon(Icons.emoji_events, color: Colors.amber, size: 16), // Changed Star to Trophy
+                                        Icon(Icons.emoji_events, color: Colors.amber, size: 16), 
                                         SizedBox(width: 4),
                                         Text(
                                           "$displayStars",
@@ -172,42 +173,62 @@ class _MainMenuPageState extends State<MainMenuPage> {
               SizedBox(height: 20),
               
               // Title "MATH PUZZLES"
-              // Using a stack/shadow for the cartoon 3D effect
               Stack(
                 children: [
                   Text(
-                    'MATH\nPUZZLES',
+                    l10n.mathPuzzlesTitle,
                     textAlign: TextAlign.center,
-                    style: GoogleFonts.titanOne( // Using a chunky font if available, or Nunito with extra bold
-                      fontSize: 50,
-                      fontWeight: FontWeight.w900,
-                      color: Colors.white,
-                      height: 0.9,
-                      shadows: [
-                        Shadow( // Simple outline/depth effect
-                          offset: Offset(0, 5),
-                          blurRadius: 0,
-                          color: Color(0xFF8E99F3),
+                    style: isKhmer 
+                      ? GoogleFonts.notoSansKhmer(
+                          fontSize: 40,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.white,
+                          height: 1.2,
+                          shadows: [
+                            Shadow(
+                              offset: Offset(0, 5),
+                              blurRadius: 0,
+                              color: Color(0xFF8E99F3),
+                            ),
+                          ],
+                        )
+                      : GoogleFonts.titanOne(
+                          fontSize: 50,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.white,
+                          height: 1.2,
+                          shadows: [
+                            Shadow(
+                              offset: Offset(0, 5),
+                              blurRadius: 0,
+                              color: Color(0xFF8E99F3),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
                   ),
                   Text(
-                    'MATH\nPUZZLES',
+                    l10n.mathPuzzlesTitle,
                     textAlign: TextAlign.center,
-                    style: GoogleFonts.titanOne(
-                      fontSize: 50,
-                      fontWeight: FontWeight.w900,
-                      color: Color(0xFFFFD54F), // Yellowish text face
-                      height: 0.9,
-                    ),
+                    style: isKhmer
+                      ? GoogleFonts.notoSansKhmer(
+                          fontSize: 40,
+                          fontWeight: FontWeight.w900,
+                          color: Color(0xFFFFD54F),
+                          height: 1.2,
+                        )
+                      : GoogleFonts.titanOne(
+                          fontSize: 50,
+                          fontWeight: FontWeight.w900,
+                          color: Color(0xFFFFD54F),
+                          height: 1.2,
+                        ),
                   ),
                 ],
               ),
               
               SizedBox(height: 10),
               Text(
-                "Train Your Brain, Improve Your Math Skill",
+                l10n.trainBrain,
                 style: TextStyle(
                   color: Colors.black54,
                   fontSize: 14,
@@ -224,8 +245,8 @@ class _MainMenuPageState extends State<MainMenuPage> {
                   children: [
                     _buildCategoryCard(
                       context,
-                      title: "Quick Calculation",
-                      description: "Solve simple math problems quickly.",
+                      title: l10n.playQuick,
+                      description: l10n.playQuickDesc,
                       color: AppTheme.primaryColor, // Pink
                       icon: Icons.timer_outlined,
                       destination: LevelSelectionPage(mode: 'quick', username: widget.username),
@@ -233,8 +254,8 @@ class _MainMenuPageState extends State<MainMenuPage> {
                     SizedBox(height: 16),
                     _buildCategoryCard(
                       context,
-                      title: "Logical Puzzle",
-                      description: "Find the missing pattern.",
+                      title: l10n.playLogical,
+                      description: l10n.playLogicalDesc,
                       color: AppTheme.accentColor, // Blue
                       icon: Icons.lightbulb_outline,
                       destination: LevelSelectionPage(mode: 'logical', username: widget.username),
@@ -242,8 +263,8 @@ class _MainMenuPageState extends State<MainMenuPage> {
                     SizedBox(height: 16),
                     _buildCategoryCard(
                       context,
-                      title: "True / False",
-                      description: "Decide if the equation is correct.",
+                      title: l10n.playTrueFalse,
+                      description: l10n.playTrueFalseDesc,
                       color: AppTheme.purpleColor, // Purple
                       icon: Icons.check_circle_outline,
                       destination: TrueFalsePage(), 
@@ -268,6 +289,9 @@ class _MainMenuPageState extends State<MainMenuPage> {
     required IconData icon,
     Widget? destination,
   }) {
+    // Check locale here as well or pass it down
+    final isKhmer = Localizations.localeOf(context).languageCode == 'km';
+
     return GestureDetector(
       onTap: () async {
         if (destination != null) {
@@ -315,21 +339,34 @@ class _MainMenuPageState extends State<MainMenuPage> {
                 children: [
                   Text(
                     title,
-                    style: GoogleFonts.nunito(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                      shadows: [Shadow(color: Colors.black26, offset: Offset(1,1))],
-                    ),
+                    style: isKhmer
+                      ? GoogleFonts.notoSansKhmer(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                          shadows: [Shadow(color: Colors.black26, offset: Offset(1,1))],
+                        )
+                      : GoogleFonts.nunito(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                          shadows: [Shadow(color: Colors.black26, offset: Offset(1,1))],
+                        ),
                   ),
                   SizedBox(height: 5),
                   Text(
                     description,
-                    style: GoogleFonts.nunito(
-                      fontSize: 14,
-                      color: Colors.white.withOpacity(0.9),
-                      height: 1.2,
-                    ),
+                    style: isKhmer
+                      ? GoogleFonts.notoSansKhmer(
+                          fontSize: 14,
+                          color: Colors.white.withOpacity(0.9),
+                          height: 1.2,
+                        )
+                      : GoogleFonts.nunito(
+                          fontSize: 14,
+                          color: Colors.white.withOpacity(0.9),
+                          height: 1.2,
+                        ),
                     maxLines: 3,
                     overflow: TextOverflow.ellipsis,
                   ),

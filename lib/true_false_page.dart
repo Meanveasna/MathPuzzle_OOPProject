@@ -4,6 +4,8 @@ import 'games/true_false_game.dart';
 import 'core/sfx.dart';
 
 
+import 'package:mathpuzzlesoop/l10n/app_localizations.dart';
+
 class TrueFalsePage extends StatefulWidget {
   final String? username;
   const TrueFalsePage({super.key, this.username});
@@ -27,12 +29,15 @@ class _TrueFalsePageState extends State<TrueFalsePage> {
   void initState() {
     super.initState();
     Sfx.correct(); // test sound once
+    // Sfx.playGameLoop(); // Removed in favor of tick
     restartGame();
   }
 
   @override
   void dispose() {
     stopTimer();
+    Sfx.stopSfx(); // Stop any long ticking sound instantly
+    Sfx.stopGameLoop(); // Still called to ensure BGM is stopped if needed (though we want silence in LevelSelection)
     super.dispose();
   }
 
@@ -83,7 +88,8 @@ class _TrueFalsePageState extends State<TrueFalsePage> {
   }
 
   void timeUp() {
-    Sfx.timeUp();
+    // Sfx.timeUp(); // Loop handles sound
+    Sfx.die(); // Play die sound on timeout
 
     // treat as wrong (simple)
     game.score -= 1;
@@ -108,6 +114,10 @@ class _TrueFalsePageState extends State<TrueFalsePage> {
         setState(() => timeLeft = 0);
         timeUp();
       } else {
+        // Tick every 2 seconds
+        if (timeLeft % 2 == 0) {
+           Sfx.playTick(); 
+        }
         setState(() => timeLeft -= 1);
       }
     });
@@ -126,22 +136,23 @@ class _TrueFalsePageState extends State<TrueFalsePage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: const Color(0xFFF7F7F7),
       appBar: AppBar(
-        title: const Text("True / False"),
+        title: Text(l10n.playTrueFalse),
         backgroundColor: Colors.transparent,
         elevation: 0,
         foregroundColor: Colors.black,
       ),
       body: Padding(
         padding: const EdgeInsets.all(18),
-        child: showCongrats ? _buildCongratsUI() : _buildGameUI(),
+        child: showCongrats ? _buildCongratsUI(l10n) : _buildGameUI(l10n),
       ),
     );
   }
 
-  Widget _buildGameUI() {
+  Widget _buildGameUI(AppLocalizations l10n) {
     return Column(
       children: [
         Row(
@@ -152,13 +163,13 @@ class _TrueFalsePageState extends State<TrueFalsePage> {
         _questionCard(game.current),
         const Spacer(),
         _fullButton(
-          text: "TRUE",
+          text: l10n.trueButton,
           color: Colors.green.shade700,
           onTap: buttonsEnabled ? () => submitAnswer(true) : null,
         ),
         const SizedBox(height: 12),
         _fullButton(
-          text: "FALSE",
+          text: l10n.falseButton,
           color: Colors.red.shade700,
           onTap: buttonsEnabled ? () => submitAnswer(false) : null,
         ),
@@ -167,7 +178,7 @@ class _TrueFalsePageState extends State<TrueFalsePage> {
     );
   }
 
-  Widget _buildCongratsUI() {
+  Widget _buildCongratsUI(AppLocalizations l10n) {
     return Center(
       child: Container(
         width: 330,
@@ -184,21 +195,21 @@ class _TrueFalsePageState extends State<TrueFalsePage> {
           children: [
             const Icon(Icons.check_circle, size: 70, color: Colors.green),
             const SizedBox(height: 10),
-            const Text(
-              "Congratulations!",
+            Text(
+              l10n.congratulations,
               style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
             ),
             const SizedBox(height: 6),
-            Text("Final Score: ${game.score}", style: const TextStyle(fontSize: 16)),
+            Text(l10n.finalScore(game.score), style: const TextStyle(fontSize: 16)),
             const SizedBox(height: 18),
             _fullButton(
-              text: "Replay",
+              text: l10n.replay,
               color: Colors.green.shade700,
               onTap: restartGame,
             ),
             const SizedBox(height: 12),
             _fullButton(
-              text: "Menu",
+              text: l10n.menu,
               color: Colors.red.shade700,
               onTap: () => Navigator.pop(context),
             ),
@@ -240,7 +251,36 @@ class _TrueFalsePageState extends State<TrueFalsePage> {
     );
   }
 
+  String _getQuestionText(TFStatement s, AppLocalizations l10n) {
+    switch (s.type) {
+      case TFQuestionType.mathOp:
+        return l10n.mathOp(s.params['a'], s.params['b'], s.params['c'], s.params['shown']);
+      case TFQuestionType.percentOf:
+        return l10n.percentOf(s.params['p'], s.params['base'], s.params['shown']);
+      case TFQuestionType.square:
+        return l10n.square(s.params['n'], s.params['shown']);
+      case TFQuestionType.algebraProblem:
+        return l10n.algebraProblem(s.params['a'], s.params['b'], s.params['result'], s.params['shownX']);
+      case TFQuestionType.rectangleAreaProblem:
+        return l10n.rectangleAreaProblem(s.params['l'], s.params['w'], s.params['shown']);
+      case TFQuestionType.circleAreaProblem:
+        return l10n.circleAreaProblem(s.params['r'], s.params['shown']);
+      case TFQuestionType.formulaAreaCircle:
+        return l10n.formulaAreaCircle;
+      case TFQuestionType.formulaAreaRect:
+        return l10n.formulaAreaRect;
+      case TFQuestionType.formulaPerimeterRect:
+        return l10n.formulaPerimeterRect;
+      case TFQuestionType.formulaAreaTriangle:
+        return l10n.formulaAreaTriangle;
+      case TFQuestionType.custom:
+      default:
+        return s.text;
+    }
+  }
+
   Widget _questionCard(TFStatement s) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
@@ -256,7 +296,7 @@ class _TrueFalsePageState extends State<TrueFalsePage> {
           Icon(s.icon, size: 48, color: Colors.deepPurple),
           const SizedBox(height: 10),
           Text(
-            s.text,
+            _getQuestionText(s, l10n),
             textAlign: TextAlign.center,
             style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
           ),

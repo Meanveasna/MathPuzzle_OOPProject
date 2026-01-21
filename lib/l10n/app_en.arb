@@ -1,0 +1,133 @@
+{
+  "appTitle": "Math Puzzle",
+  "mathPuzzlesTitle": "MATH\nPUZZLES",
+  "startGame": "START GAME",
+  "enterUsername": "Enter your username",
+  "profile": "My Profile",
+  "saveChanges": "SAVE CHANGES",
+  "totalScore": "Total Score",
+  "settings": "Settings",
+  "language": "Language",
+  "english": "English",
+  "khmer": "Khmer (ខ្មែរ)",
+  "audioSettings": "Audio Settings",
+  "musicVolume": "Music Volume",
+  "soundVolume": "Sound Volume",
+  "gameData": "Game Data",
+  "resetProgress": "Reset Progress",
+  "resetProgressSubtitle": "Clear all levels and scores",
+  "yes": "Yes",
+  "no": "No",
+  "chooseAvatar": "Choose Your Avatar",
+  "playQuick": "Quick Calculation",
+  "playQuickDesc": "Solve simple math problems quickly.",
+  "playLogical": "Logical Puzzle",
+  "playLogicalDesc": "Find the missing pattern.",
+  "playTrueFalse": "True / False",
+  "playTrueFalseDesc": "Decide if the equation is correct.",
+  "trainBrain": "Train Your Brain, Improve Your Math Skill",
+  "scoreboard": "Scoreboard",
+  "exit": "Exit",
+  "confirmExit": "Confirm Exit",
+  "confirmExitContent": "Are you sure you want to exit the app?",
+  "selectLevel": "Select Level",
+  "levelLocked": "Level {level} is locked! Complete previous levels first.",
+  "@levelLocked": {
+    "placeholders": {
+      "level": {}
+    }
+  },
+  "levelLabel": "Level {level}",
+  "@levelLabel": {
+    "placeholders": {
+      "level": {}
+    }
+  },
+  "nextLevel": "NEXT LEVEL",
+  "retry": "RETRY",
+  "backToMenu": "Back to Menu",
+  "congratulations": "Congratulations!",
+  "correctAnswer": "Correct! 🎉",
+  "wrongAnswer": "Wrong answer! Try again.",
+  "submit": "Submit",
+  "finalScore": "Final Score: {score}",
+  "@finalScore": {
+    "placeholders": {
+      "score": {}
+    }
+  },
+  "replay": "Replay",
+  "menu": "Menu",
+  "levelPassed": "Level Passed!",
+  "levelFailed": "Level Failed",
+  "correctCountLabel": "Correct: {count} / {total}",
+  "@correctCountLabel": {
+    "placeholders": {
+      "count": {},
+      "total": {}
+    }
+  },
+  "trueButton": "TRUE",
+  "falseButton": "FALSE",
+  "calculator": "Calculator",
+  "clear": "Clear",
+  "enterAnswer": "Enter answer",
+  "coin": "Coin",
+  "mathOp": "{a} + {b} × {c} = {shown}",
+  "@mathOp": {
+    "placeholders": {
+      "a": {},
+      "b": {},
+      "c": {},
+      "shown": {}
+    }
+  },
+  "percentOf": "{p}% of {base} = {shown}",
+  "@percentOf": {
+    "placeholders": {
+      "p": {},
+      "base": {},
+      "shown": {}
+    }
+  },
+  "square": "{n}² = {shown}",
+  "@square": {
+    "placeholders": {
+      "n": {},
+      "shown": {}
+    }
+  },
+  "algebraProblem": "If {a}x + {b} = {result}\nthen x = {shownX}",
+  "@algebraProblem": {
+    "placeholders": {
+      "a": {},
+      "b": {},
+      "result": {},
+      "shownX": {}
+    }
+  },
+  "rectangleAreaProblem": "Rectangle\nL = {l}, W = {w}\nArea = {shown}",
+  "@rectangleAreaProblem": {
+    "placeholders": {
+      "l": {},
+      "w": {},
+      "shown": {}
+    }
+  },
+  "circleAreaProblem": "Circle\nr = {r}\nArea ≈ {shown}",
+  "@circleAreaProblem": {
+    "placeholders": {
+      "r": {},
+      "shown": {}
+    }
+  },
+  "formulaAreaCircle": "Area of circle = π × r²",
+  "formulaAreaRect": "Area of rectangle = L + W",
+  "formulaPerimeterRect": "Perimeter of rectangle = 2(L + W)",
+  "formulaAreaTriangle": "Triangle area = base × height",
+  "profileSaved": "Profile Saved!",
+  "editUsername": "Edit Username",
+  "enterNewName": "Enter new name",
+  "cancel": "Cancel",
+  "save": "Save"
+}
