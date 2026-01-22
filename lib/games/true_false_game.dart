@@ -12,16 +12,14 @@ enum TFQuestionType {
   formulaAreaRect,
   formulaPerimeterRect,
   formulaAreaTriangle,
-  custom, // fallback
+  custom,
 }
 
 class TFStatement {
-  // Instead of a single text, we store type + params so UI can localize
   final TFQuestionType type;
   final Map<String, dynamic> params;
-  
-  // Keep text for fallback or debug, but UI should prefer using type+params
-  final String text; // English default
+
+  final String text;
   final bool isTrue;
   final IconData icon;
 
@@ -166,27 +164,27 @@ class TFStatementGenerator {
     final list = [
       const TFStatement(
         type: TFQuestionType.formulaAreaCircle,
-        text: "Area of circle = π × r²", 
-        isTrue: true, 
-        icon: Icons.menu_book
+        text: "Area of circle = π × r²",
+        isTrue: true,
+        icon: Icons.menu_book,
       ),
       const TFStatement(
         type: TFQuestionType.formulaAreaRect,
-        text: "Area of rectangle = L + W", 
-        isTrue: false, 
-        icon: Icons.menu_book
+        text: "Area of rectangle = L + W",
+        isTrue: false,
+        icon: Icons.menu_book,
       ),
       const TFStatement(
         type: TFQuestionType.formulaPerimeterRect,
-        text: "Perimeter of rectangle = 2(L + W)", 
-        isTrue: true, 
-        icon: Icons.menu_book
+        text: "Perimeter of rectangle = 2(L + W)",
+        isTrue: true,
+        icon: Icons.menu_book,
       ),
       const TFStatement(
         type: TFQuestionType.formulaAreaTriangle,
-        text: "Triangle area = base × height", 
-        isTrue: false, 
-        icon: Icons.menu_book
+        text: "Triangle area = base × height",
+        isTrue: false,
+        icon: Icons.menu_book,
       ),
     ];
     return list[rand.nextInt(list.length)];
@@ -199,9 +197,8 @@ class TFStatementGenerator {
   }
 }
 
-/// A tiny "game state" class so your page stays clean
 class TrueFalseGameState {
-  static const int targetScore = 20;
+  static const int targetScore = 10;
 
   final TFStatementGenerator generator;
   int score = 0;
@@ -213,7 +210,7 @@ class TrueFalseGameState {
   );
 
   TrueFalseGameState({TFStatementGenerator? generator})
-      : generator = generator ?? TFStatementGenerator();
+    : generator = generator ?? TFStatementGenerator();
 
   void reset() {
     score = 0;
@@ -232,8 +229,16 @@ class TrueFalseGameState {
 
   bool answer(bool playerSaysTrue) {
     final correct = (playerSaysTrue == current.isTrue);
-    score += correct ? 1 : -1;
+    if (correct) {
+      score += 1;
+    } else {
+      score += 0;
+    }
     return correct;
+  }
+
+  void timeout() {
+    debugPrint("TIMEOUT METHOD IS RUNNING");
   }
 
   bool reachedTarget() => score >= targetScore;

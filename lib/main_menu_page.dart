@@ -1,4 +1,3 @@
-import 'scoreboard_page.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'core/sfx.dart';
@@ -28,8 +27,14 @@ class _MainMenuPageState extends State<MainMenuPage> {
   @override
   void initState() {
     super.initState();
-    Sfx.playBgm('menu_bg.mp3');
     _loadUserData();
+    Sfx.playMenuBgm(); // 🎵 START MENU MUSIC
+  }
+
+  @override
+  void dispose() {
+    Sfx.stopBgm(); // ⏹️ STOP WHEN MENU IS DESTROYED
+    super.dispose();
   }
 
   void _loadUserData() async {
@@ -56,11 +61,11 @@ class _MainMenuPageState extends State<MainMenuPage> {
 
     if (_currentUser != null) {
       displayUsername = _currentUser!.username;
-      displayAvatar = _currentUser!.avatarId; 
+      displayAvatar = _currentUser!.avatarId;
       displayStars = _currentUser!.totalStars;
-      
+
       if (displayAvatar == '0' || int.tryParse(displayAvatar) != null) {
-         if(displayAvatar == '0') displayAvatar = '🐼';
+        if (displayAvatar == '0') displayAvatar = '🐼';
       }
     }
 
@@ -68,7 +73,10 @@ class _MainMenuPageState extends State<MainMenuPage> {
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [const Color(0xFFC3E0FF), const Color(0xFFE6D6FF)], // Sky blue to light purple
+            colors: [
+              const Color(0xFFC3E0FF),
+              const Color(0xFFE6D6FF),
+            ], // Sky blue to light purple
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),
@@ -78,7 +86,10 @@ class _MainMenuPageState extends State<MainMenuPage> {
             children: [
               // Top Bar
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 10,
+                ),
                 child: Stack(
                   alignment: Alignment.center,
                   children: [
@@ -86,14 +97,19 @@ class _MainMenuPageState extends State<MainMenuPage> {
                     Align(
                       alignment: Alignment.centerLeft,
                       child: Container(
-                        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.4), 
+                        constraints: BoxConstraints(
+                          maxWidth: MediaQuery.of(context).size.width * 0.4,
+                        ),
                         child: GestureDetector(
                           onTap: () async {
-                             await Navigator.push(
+                            await Navigator.push(
                               context,
-                              MaterialPageRoute(builder: (context) => ProfilePage(username: widget.username)),
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    ProfilePage(username: widget.username),
+                              ),
                             );
-                            _loadUserData(); 
+                            _loadUserData();
                           },
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
@@ -101,38 +117,48 @@ class _MainMenuPageState extends State<MainMenuPage> {
                               CircleAvatar(
                                 backgroundColor: Colors.white,
                                 radius: 20,
-                                child: Text(displayAvatar, style: TextStyle(fontSize: 24)),
+                                child: Text(
+                                  displayAvatar,
+                                  style: TextStyle(fontSize: 24),
+                                ),
                               ),
                               SizedBox(width: 8),
                               Flexible(
                                 child: Column(
-                                   crossAxisAlignment: CrossAxisAlignment.start,
-                                   mainAxisSize: MainAxisSize.min,
-                                   children: [
-                                     Text(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
                                       displayUsername,
                                       style: TextStyle(
-                                        fontSize: 16, 
+                                        fontSize: 16,
                                         fontWeight: FontWeight.bold,
                                         color: Color(0xFF5A5A5A),
                                       ),
-                                      maxLines: 1, 
+                                      maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
-                                     ),
-                                     Row(
+                                    ),
+                                    Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        Icon(Icons.emoji_events, color: Colors.amber, size: 16), 
+                                        Icon(
+                                          Icons.emoji_events,
+                                          color: Colors.amber,
+                                          size: 16,
+                                        ),
                                         SizedBox(width: 4),
                                         Text(
                                           "$displayStars",
-                                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.bold,
+                                          ),
                                         ),
                                       ],
-                                     ),
-                                   ]
+                                    ),
+                                  ],
                                 ),
-                              )
+                              ),
                             ],
                           ),
                         ),
@@ -146,15 +172,24 @@ class _MainMenuPageState extends State<MainMenuPage> {
                         color: Colors.white.withOpacity(0.5),
                         shape: BoxShape.circle,
                       ),
-                      child: Icon(Icons.emoji_events, size: 28, color: Colors.amber),
+                      child: Icon(
+                        Icons.emoji_events,
+                        size: 28,
+                        color: Colors.amber,
+                      ),
                     ),
-                    
+
                     // Right: Settings
                     Align(
                       alignment: Alignment.centerRight,
                       child: GestureDetector(
                         onTap: () {
-                           Navigator.push(context, MaterialPageRoute(builder: (context) => SettingsPage()));
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => SettingsPage(),
+                            ),
+                          );
                         },
                         child: Container(
                           padding: EdgeInsets.all(8),
@@ -162,70 +197,74 @@ class _MainMenuPageState extends State<MainMenuPage> {
                             color: Colors.white.withOpacity(0.5),
                             shape: BoxShape.circle,
                           ),
-                          child: Icon(Icons.settings, size: 28, color: Color(0xFF5A5A5A)),
+                          child: Icon(
+                            Icons.settings,
+                            size: 28,
+                            color: Color(0xFF5A5A5A),
+                          ),
                         ),
                       ),
                     ),
                   ],
                 ),
               ),
-              
+
               SizedBox(height: 20),
-              
+
               // Title "MATH PUZZLES"
               Stack(
                 children: [
                   Text(
                     l10n.mathPuzzlesTitle,
                     textAlign: TextAlign.center,
-                    style: isKhmer 
-                      ? GoogleFonts.notoSansKhmer(
-                          fontSize: 40,
-                          fontWeight: FontWeight.w900,
-                          color: Colors.white,
-                          height: 1.2,
-                          shadows: [
-                            Shadow(
-                              offset: Offset(0, 5),
-                              blurRadius: 0,
-                              color: Color(0xFF8E99F3),
-                            ),
-                          ],
-                        )
-                      : GoogleFonts.titanOne(
-                          fontSize: 50,
-                          fontWeight: FontWeight.w900,
-                          color: Colors.white,
-                          height: 1.2,
-                          shadows: [
-                            Shadow(
-                              offset: Offset(0, 5),
-                              blurRadius: 0,
-                              color: Color(0xFF8E99F3),
-                            ),
-                          ],
-                        ),
+                    style: isKhmer
+                        ? GoogleFonts.notoSansKhmer(
+                            fontSize: 40,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.white,
+                            height: 1.2,
+                            shadows: [
+                              Shadow(
+                                offset: Offset(0, 5),
+                                blurRadius: 0,
+                                color: Color(0xFF8E99F3),
+                              ),
+                            ],
+                          )
+                        : GoogleFonts.titanOne(
+                            fontSize: 50,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.white,
+                            height: 1.2,
+                            shadows: [
+                              Shadow(
+                                offset: Offset(0, 5),
+                                blurRadius: 0,
+                                color: Color(0xFF8E99F3),
+                              ),
+                            ],
+                          ),
                   ),
                   Text(
                     l10n.mathPuzzlesTitle,
                     textAlign: TextAlign.center,
                     style: isKhmer
-                      ? GoogleFonts.notoSansKhmer(
-                          fontSize: 40,
-                          fontWeight: FontWeight.w900,
-                          color: Color(0xFFFFD54F),
-                          height: 1.2,
-                        )
-                      : GoogleFonts.titanOne(
-                          fontSize: 50,
-                          fontWeight: FontWeight.w900,
-                          color: Color(0xFFFFD54F),
-                          height: 1.2,
-                        ),
+                        ? GoogleFonts.notoSansKhmer(
+                            fontSize: 40,
+                            fontWeight: FontWeight.w900,
+                            color: Color(0xFFFFD54F),
+                            height: 1.2,
+                          )
+                        : GoogleFonts.titanOne(
+                            fontSize: 50,
+                            fontWeight: FontWeight.w900,
+                            color: Color(0xFFFFD54F),
+                            height: 1.2,
+                          ),
                   ),
                 ],
               ),
-              
+
               SizedBox(height: 10),
               Text(
                 l10n.trainBrain,
@@ -235,9 +274,9 @@ class _MainMenuPageState extends State<MainMenuPage> {
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              
+
               SizedBox(height: 30),
-              
+
               // Categories List
               Expanded(
                 child: ListView(
@@ -249,7 +288,10 @@ class _MainMenuPageState extends State<MainMenuPage> {
                       description: l10n.playQuickDesc,
                       color: AppTheme.primaryColor, // Pink
                       icon: Icons.timer_outlined,
-                      destination: LevelSelectionPage(mode: 'quick', username: widget.username),
+                      destination: LevelSelectionPage(
+                        mode: 'quick',
+                        username: widget.username,
+                      ),
                     ),
                     SizedBox(height: 16),
                     _buildCategoryCard(
@@ -258,7 +300,10 @@ class _MainMenuPageState extends State<MainMenuPage> {
                       description: l10n.playLogicalDesc,
                       color: AppTheme.accentColor, // Blue
                       icon: Icons.lightbulb_outline,
-                      destination: LevelSelectionPage(mode: 'logical', username: widget.username),
+                      destination: LevelSelectionPage(
+                        mode: 'logical',
+                        username: widget.username,
+                      ),
                     ),
                     SizedBox(height: 16),
                     _buildCategoryCard(
@@ -267,14 +312,14 @@ class _MainMenuPageState extends State<MainMenuPage> {
                       description: l10n.playTrueFalseDesc,
                       color: AppTheme.purpleColor, // Purple
                       icon: Icons.check_circle_outline,
-                      destination: TrueFalsePage(), 
+                      destination: TrueFalsePage(),
                     ),
                   ],
                 ),
               ),
-             
-               // Bottom Ad Placeholder or footer
-               SizedBox(height: 20),
+
+              // Bottom Ad Placeholder or footer
+              SizedBox(height: 20),
             ],
           ),
         ),
@@ -282,7 +327,8 @@ class _MainMenuPageState extends State<MainMenuPage> {
     );
   }
 
-  Widget _buildCategoryCard(BuildContext context, {
+  Widget _buildCategoryCard(
+    BuildContext context, {
     required String title,
     required String description,
     required Color color,
@@ -295,8 +341,13 @@ class _MainMenuPageState extends State<MainMenuPage> {
     return GestureDetector(
       onTap: () async {
         if (destination != null) {
-          await Navigator.push(context, MaterialPageRoute(builder: (context) => destination));
-          _loadUserData(); // Refresh stars when returning from game
+          Sfx.stopBgm();
+          await Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => destination),
+          );
+          Sfx.playMenuBgm();
+          _loadUserData();
         }
       },
       child: Container(
@@ -309,7 +360,7 @@ class _MainMenuPageState extends State<MainMenuPage> {
               color: Colors.black12,
               offset: Offset(0, 8),
               blurRadius: 0, // Solid shadow for cartoon look
-            )
+            ),
           ],
         ),
         child: Stack(
@@ -328,7 +379,7 @@ class _MainMenuPageState extends State<MainMenuPage> {
                 child: Icon(icon, size: 40, color: Colors.black87),
               ),
             ),
-             Positioned(
+            Positioned(
               right: 20,
               top: 20,
               bottom: 20,
@@ -340,33 +391,43 @@ class _MainMenuPageState extends State<MainMenuPage> {
                   Text(
                     title,
                     style: isKhmer
-                      ? GoogleFonts.notoSansKhmer(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                          shadows: [Shadow(color: Colors.black26, offset: Offset(1,1))],
-                        )
-                      : GoogleFonts.nunito(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                          shadows: [Shadow(color: Colors.black26, offset: Offset(1,1))],
-                        ),
+                        ? GoogleFonts.notoSansKhmer(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                            shadows: [
+                              Shadow(
+                                color: Colors.black26,
+                                offset: Offset(1, 1),
+                              ),
+                            ],
+                          )
+                        : GoogleFonts.nunito(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                            shadows: [
+                              Shadow(
+                                color: Colors.black26,
+                                offset: Offset(1, 1),
+                              ),
+                            ],
+                          ),
                   ),
                   SizedBox(height: 5),
                   Text(
                     description,
                     style: isKhmer
-                      ? GoogleFonts.notoSansKhmer(
-                          fontSize: 14,
-                          color: Colors.white.withOpacity(0.9),
-                          height: 1.2,
-                        )
-                      : GoogleFonts.nunito(
-                          fontSize: 14,
-                          color: Colors.white.withOpacity(0.9),
-                          height: 1.2,
-                        ),
+                        ? GoogleFonts.notoSansKhmer(
+                            fontSize: 14,
+                            color: Colors.white.withOpacity(0.9),
+                            height: 1.2,
+                          )
+                        : GoogleFonts.nunito(
+                            fontSize: 14,
+                            color: Colors.white.withOpacity(0.9),
+                            height: 1.2,
+                          ),
                     maxLines: 3,
                     overflow: TextOverflow.ellipsis,
                   ),

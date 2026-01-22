@@ -1,7 +1,7 @@
 // logical_puzzle_game.dart
 import 'package:flutter/material.dart';
 
-//Level 3 class 
+//Level 3 class
 class TriangularLatticePainter extends CustomPainter {
   final int divisions; // 2 -> 4 small triangles, 3 -> 9 small triangles
   TriangularLatticePainter({required this.divisions});
@@ -27,10 +27,8 @@ class TriangularLatticePainter extends CustomPainter {
     canvas.drawPath(outline, stroke);
 
     // Helper to lerp points
-    Offset lerp(Offset p, Offset q, double t) => Offset(
-      p.dx + (q.dx - p.dx) * t,
-      p.dy + (q.dy - p.dy) * t,
-    );
+    Offset lerp(Offset p, Offset q, double t) =>
+        Offset(p.dx + (q.dx - p.dx) * t, p.dy + (q.dy - p.dy) * t);
 
     // Draw lattice: lines parallel to all three sides
     for (int k = 1; k < divisions; k++) {
@@ -57,7 +55,7 @@ class TriangularLatticePainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
-//Level 6 class 
+//Level 6 class
 class GridBoxPainter extends CustomPainter {
   final int rows;
   final int columns;
@@ -88,6 +86,7 @@ class GridBoxPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
+
 // Level 9 class
 class InvertedTrianglePainter extends CustomPainter {
   @override
@@ -128,9 +127,9 @@ class UpsideDownTriangle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const double w = 50;   // compact width
-    const double h = 50;   // compact height
-    const double pad = 0;  // text padding from edges
+    const double w = 50; // compact width
+    const double h = 50; // compact height
+    const double pad = 0; // text padding from edges
 
     return SizedBox(
       width: w + 20,
@@ -144,8 +143,8 @@ class UpsideDownTriangle extends StatelessWidget {
           ),
           // Two numbers at the base corners (top edge in screen coords)
           Positioned(
-            top: pad -2,
-            left: pad -10,
+            top: pad - 2,
+            left: pad - 10,
             child: Text("$topLeft", style: const TextStyle(fontSize: 14)),
           ),
           Positioned(
@@ -204,26 +203,26 @@ class LogicalPuzzleGame {
 
     // Level 2 — TRIANGLE FEATURE
     // Level 2 — TRIANGLE FEATURE
-// Level 2 — TRIANGLE FEATURE
-Column(
-  mainAxisSize: MainAxisSize.min,
-  children: [
-    // Smaller triangle (no scroll)
-    CustomPaint(
-      size: const Size(90, 90),
-      painter: TriangularLatticePainter(divisions: 2),
+    // Level 2 — TRIANGLE FEATURE
+    Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Smaller triangle (no scroll)
+        CustomPaint(
+          size: const Size(90, 90),
+          painter: TriangularLatticePainter(divisions: 2),
+        ),
+        const SizedBox(height: 6),
+        const Text("= 5", style: TextStyle(fontSize: 16)),
+        const SizedBox(height: 20),
+        CustomPaint(
+          size: const Size(120, 120),
+          painter: TriangularLatticePainter(divisions: 3),
+        ),
+        const SizedBox(height: 6),
+        const Text("= ?", style: TextStyle(fontSize: 16)),
+      ],
     ),
-    const SizedBox(height: 6),
-    const Text("= 5", style: TextStyle(fontSize: 16)),
-    const SizedBox(height: 20),
-    CustomPaint(
-      size: const Size(120, 120),
-      painter: TriangularLatticePainter(divisions: 3),
-    ),
-    const SizedBox(height: 6),
-    const Text("= ?", style: TextStyle(fontSize: 16)),
-  ],
-),
 
     // Level 3
     const Text(
@@ -247,24 +246,24 @@ Column(
     ),
 
     // Level 6 — GRID PUZZLE
-Column(
-  mainAxisSize: MainAxisSize.min,
-  children: [
-    CustomPaint(
-      size: const Size(90, 90),
-      painter: GridBoxPainter(rows: 2, columns: 2),
+    Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        CustomPaint(
+          size: const Size(90, 90),
+          painter: GridBoxPainter(rows: 2, columns: 2),
+        ),
+        const SizedBox(height: 6),
+        const Text("= 5", style: TextStyle(fontSize: 16)),
+        const SizedBox(height: 20),
+        CustomPaint(
+          size: const Size(120, 120),
+          painter: GridBoxPainter(rows: 3, columns: 3),
+        ),
+        const SizedBox(height: 6),
+        const Text("= ?", style: TextStyle(fontSize: 16)),
+      ],
     ),
-    const SizedBox(height: 6),
-    const Text("= 5", style: TextStyle(fontSize: 16)),
-    const SizedBox(height: 20),
-    CustomPaint(
-      size: const Size(120, 120),
-      painter: GridBoxPainter(rows: 3, columns: 3),
-    ),
-    const SizedBox(height: 6),
-    const Text("= ?", style: TextStyle(fontSize: 16)),
-  ],
-),
 
     // Level 7
     const Text(
@@ -275,9 +274,9 @@ Column(
 
     // Level 8
     const Text(
-      "2   1   0   0\n"
-      "4   1   1   1\n"
-      "6   1   0   2\n"
+      "2   1   1   0\n"
+      "4   1   0   1\n"
+      "6   1   1   2\n"
       "?   ?   ?   ?",
       textAlign: TextAlign.center,
       style: TextStyle(fontSize: 20),
@@ -348,47 +347,39 @@ Column(
       },
       border: TableBorder.all(color: Colors.black, width: 1.5),
       children: [
-        const TableRow(children: [
-          _GridCell('49'),
-          _GridCell('64'),
-          _GridCell('1'),
-        ]),
-        const TableRow(children: [
-          _GridCell('9'),
-          _GridCell('?'),
-          _GridCell('36'),
-        ]),
-        const TableRow(children: [
-          _GridCell('81'),
-          _GridCell('25'),
-          _GridCell('16'),
-        ]),
+        const TableRow(
+          children: [_GridCell('49'), _GridCell('64'), _GridCell('1')],
+        ),
+        const TableRow(
+          children: [_GridCell('9'), _GridCell('?'), _GridCell('36')],
+        ),
+        const TableRow(
+          children: [_GridCell('81'), _GridCell('25'), _GridCell('16')],
+        ),
       ],
-    )
-
+    ),
   ];
 
   final List<String> answers = [
-    "32",   // 1
-    "13",   // 2
-    "27",   // 3
-    "4",    // 4
-    "24",   // 5
-    "14",   // 6
-    "56",   // 7
+    "32", // 1
+    "13", // 2
+    "27", // 3
+    "4", // 4
+    "24", // 5
+    "14", // 6
+    "56", // 7
     "8103", // 8
-    "5",    // 9
-    "63",   // 10
-    "4",    // 11
+    "5", // 9
+    "63", // 10
+    "4", // 11
     "8731", // 12
-    "6",    // 13
-    "13",    // 14
-    "4",    // 15
+    "6", // 13
+    "13", // 14
+    "4", // 15
   ];
 
   bool isCorrect(int levelIndex, String input) {
-    return input.trim().toLowerCase() ==
-        answers[levelIndex].toLowerCase();
+    return input.trim().toLowerCase() == answers[levelIndex].toLowerCase();
   }
 
   int get totalLevels => questions.length;
@@ -400,10 +391,8 @@ Column(
       alignment: WrapAlignment.center,
       children: List.generate(
         count,
-        (_) => CustomPaint(
-          size: const Size(40, 35),
-          painter: _TrianglePainter(),
-        ),
+        (_) =>
+            CustomPaint(size: const Size(40, 35), painter: _TrianglePainter()),
       ),
     );
   }

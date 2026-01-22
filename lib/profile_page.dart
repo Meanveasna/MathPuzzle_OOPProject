@@ -13,6 +13,7 @@ class ProfilePage extends StatefulWidget {
   @override
   _ProfilePageState createState() => _ProfilePageState();
 }
+
 final TextEditingController _usernameController = TextEditingController();
 bool _isEditingName = false;
 
@@ -20,11 +21,26 @@ class _ProfilePageState extends State<ProfilePage> {
   User? _currentUser;
   bool _isLoading = true;
   String _selectedAvatarId = '0';
-  
+
   final List<String> _avatars = [
-    '🐼', '🦊', '🦁', '🐯', '🐸', '🐨', 
-    '🦄', '🐲', '👾', '🤖', '👻', '👽',
-    '⚽', '🏀', '🎸', '🎨', '🚀', '⭐'
+    '🐼',
+    '🦊',
+    '🦁',
+    '🐯',
+    '🐸',
+    '🐨',
+    '🦄',
+    '🐲',
+    '👾',
+    '🤖',
+    '👻',
+    '👽',
+    '⚽',
+    '🏀',
+    '🎸',
+    '🎨',
+    '🚀',
+    '⭐',
   ];
 
   @override
@@ -36,32 +52,39 @@ class _ProfilePageState extends State<ProfilePage> {
   void _loadUserData() async {
     User? user = await PlayerRepository().getUser();
     if (user != null) {
-       setState(() {
-         _currentUser = user;
-         _selectedAvatarId = user.avatarId;
-         if (!_avatars.contains(_selectedAvatarId) && _selectedAvatarId != '0') {
-           int? idx = int.tryParse(_selectedAvatarId);
-           if (idx != null && idx >= 0 && idx < _avatars.length) {
-              _selectedAvatarId = _avatars[idx];
-           } else {
-             if (!_avatars.contains(_selectedAvatarId)) _selectedAvatarId = _avatars[0];
-           }
-         }
-         _isLoading = false;
-       });
+      setState(() {
+        _currentUser = user;
+        _selectedAvatarId = user.avatarId;
+        if (!_avatars.contains(_selectedAvatarId) && _selectedAvatarId != '0') {
+          int? idx = int.tryParse(_selectedAvatarId);
+          if (idx != null && idx >= 0 && idx < _avatars.length) {
+            _selectedAvatarId = _avatars[idx];
+          } else {
+            if (!_avatars.contains(_selectedAvatarId))
+              _selectedAvatarId = _avatars[0];
+          }
+        }
+        _isLoading = false;
+      });
     } else {
-       setState(() { _isLoading = false; });
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
   void _saveProfile() async {
+    final l10n = AppLocalizations.of(context)!;
     if (_currentUser != null) {
       _currentUser!.avatarId = _selectedAvatarId;
       await PlayerRepository().updateUser(_currentUser!);
 
       if (mounted) {
-         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Profile Saved!'), backgroundColor: Colors.green),
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(l10n.profileSaved),
+            backgroundColor: Colors.green,
+          ),
         );
       }
     }
@@ -70,14 +93,20 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return Scaffold(backgroundColor: AppTheme.backgroundColor, body: Center(child: CircularProgressIndicator()));
+      return Scaffold(
+        backgroundColor: AppTheme.backgroundColor,
+        body: Center(child: CircularProgressIndicator()),
+      );
     }
 
     final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
-      appBar: AppBar(title: Text(l10n.profile), backgroundColor: AppTheme.primaryColor),
+      appBar: AppBar(
+        title: Text(l10n.profile),
+        backgroundColor: AppTheme.primaryColor,
+      ),
       body: SingleChildScrollView(
         padding: EdgeInsets.all(24),
         child: Column(
@@ -92,24 +121,28 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
             ),
             SizedBox(height: 20),
-            
+
             // Username with Edit Button
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
                   _currentUser?.username ?? widget.username,
-                  style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.black87),
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
                 ),
                 SizedBox(width: 8),
                 IconButton(
                   icon: Icon(Icons.edit, color: Colors.blueGrey),
-                  tooltip: 'Edit Username',
+                  tooltip: l10n.editUsername,
                   onPressed: _showEditNameDialog,
                 ),
               ],
             ),
-            
+
             SizedBox(height: 10),
             Container(
               padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
@@ -120,21 +153,32 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
               child: Text(
                 '${l10n.totalScore}: ${_currentUser?.totalScore ?? 0}',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.brown),
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.brown,
+                ),
               ),
             ),
-            
+
             SizedBox(height: 40),
-            Text(l10n.chooseAvatar, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.grey[700])),
+            Text(
+              l10n.chooseAvatar,
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey[700],
+              ),
+            ),
             SizedBox(height: 15),
-            
+
             // Avatar Selector Grid
             Container(
               height: 250,
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(15),
-                boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 5)]
+                boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 5)],
               ),
               padding: EdgeInsets.all(10),
               child: GridView.builder(
@@ -155,9 +199,13 @@ class _ProfilePageState extends State<ProfilePage> {
                     },
                     child: Container(
                       decoration: BoxDecoration(
-                        color: isSelected ? AppTheme.primaryColor.withOpacity(0.3) : Colors.grey[100],
+                        color: isSelected
+                            ? AppTheme.primaryColor.withOpacity(0.3)
+                            : Colors.grey[100],
                         shape: BoxShape.circle,
-                        border: isSelected ? Border.all(color: AppTheme.primaryColor, width: 3) : null,
+                        border: isSelected
+                            ? Border.all(color: AppTheme.primaryColor, width: 3)
+                            : null,
                       ),
                       child: Center(
                         child: Text(avatar, style: TextStyle(fontSize: 24)),
@@ -173,9 +221,18 @@ class _ProfilePageState extends State<ProfilePage> {
               width: double.infinity,
               height: 55,
               child: ElevatedButton(
-                style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryColor),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primaryColor,
+                ),
                 onPressed: _saveProfile,
-                child: Text(l10n.saveChanges, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
+                child: Text(
+                  l10n.saveChanges,
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
               ),
             ),
           ],
@@ -185,28 +242,28 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   void _showEditNameDialog() {
+    final l10n = AppLocalizations.of(context)!;
     _usernameController.text = _currentUser?.username ?? '';
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text('Edit Username'),
+          title: Text(l10n.editUsername),
           content: TextField(
             controller: _usernameController,
-            maxLength: 10, // Max 10 chars, allows special chars/spaces
-            decoration: InputDecoration(hintText: "Enter new name"),
+            decoration: InputDecoration(hintText: l10n.enterUsername),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text('Cancel'),
+              child: Text(l10n.cancel),
             ),
             TextButton(
               onPressed: () {
                 _updateUsername(_usernameController.text.trim());
                 Navigator.pop(context);
               },
-              child: Text('Save'),
+              child: Text(l10n.save),
             ),
           ],
         );
@@ -219,7 +276,7 @@ class _ProfilePageState extends State<ProfilePage> {
       setState(() {
         _currentUser!.username = newName;
       });
-      // Optionally save immediately or wait for "SAVE CHANGES"; 
+      // Optionally save immediately or wait for "SAVE CHANGES";
       // User request implies immediate effect or clear "save" for next time.
       // Saving immediately here ensures name is persisted even if avatar isn't changed.
       await PlayerRepository().updateUser(_currentUser!);
