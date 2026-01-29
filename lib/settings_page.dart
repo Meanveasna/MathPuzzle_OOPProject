@@ -38,7 +38,6 @@ class _SettingsPageState extends State<SettingsPage> {
     await prefs.setDouble('soundVolume', _soundVolume);
   }
 
-  // ✅ THIS WAS MISSING
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -63,14 +62,15 @@ class _SettingsPageState extends State<SettingsPage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                _buildLanguageButton(context, 'English', '🇺🇸', const Locale('en')),
+                _buildLanguageButton(
+                    context, 'English', '🇺🇸', const Locale('en')),
                 _buildLanguageButton(context, 'ខ្មែរ', '🇰🇭', const Locale('km')),
               ],
             ),
 
             Divider(height: 40),
 
-            // 🔊 Audio
+            // Audio
             Text(
               l10n.audioSettings,
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
@@ -79,7 +79,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
             _buildVolumeSlider(l10n.musicVolume, _musicVolume, (val) {
               setState(() => _musicVolume = val);
-              Sfx.setBgmVolume(val); 
+              Sfx.setBgmVolume(val);
             }),
 
             _buildVolumeSlider(l10n.soundVolume, _soundVolume, (val) {
@@ -89,7 +89,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
             Divider(height: 40),
 
-            // 🗑 Reset
+            // Reset
             Text(
               l10n.gameData,
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
@@ -133,6 +133,79 @@ class _SettingsPageState extends State<SettingsPage> {
                     (_) => false,
                   );
                 }
+              },
+            ),
+
+            // About Me
+            SizedBox(height: 20),
+            ListTile(
+              title: Text(l10n.aboutus),
+              subtitle: Text(l10n.meetthedeveloper),
+              leading: Icon(Icons.info_outline, color: Colors.blue),
+              tileColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              onTap: () {
+                showDialog(
+                  context: context,
+                  barrierDismissible: true,
+                  builder: (context) => Dialog(
+                    backgroundColor: Colors.transparent,
+                    insetPadding: EdgeInsets.all(30),
+                    child: Stack(
+                      children: [
+                        Container(
+                          padding: EdgeInsets.all(15),
+                          margin: EdgeInsets.only(top: 20),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              SizedBox(height: 20),
+                              Text(
+                                l10n.aboutus,
+                                style: TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              SizedBox(height: 20),
+                              _buildDeveloperTile(
+                                  l10n.lang, l10n.langdecription),
+                             _buildDeveloperTile(l10n.sna, l10n.snadescription),
+                              _buildDeveloperTile(l10n.liz, l10n.lizdescription),
+                              Text(l10n.g1),
+                              Text(l10n.g2),
+                            ],
+                          ),
+                        ),
+                        Positioned(
+                          right: 0,
+                          top: 0,
+                          child: GestureDetector(
+                            onTap: () => Navigator.pop(context),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Colors.grey[300],
+                                shape: BoxShape.circle,
+                              ),
+                              padding: EdgeInsets.all(5),
+                              child: Icon(
+                                Icons.close,
+                                size: 20,
+                                color: Colors.black,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
               },
             ),
           ],
@@ -195,6 +268,21 @@ class _SettingsPageState extends State<SettingsPage> {
           activeColor: AppTheme.primaryColor,
         ),
       ],
+    );
+  }
+
+  Widget _buildDeveloperTile(String name, String role) {
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      leading: CircleAvatar(
+        backgroundColor: AppTheme.primaryColor,
+        child: Text(
+          name[0],
+          style: TextStyle(color: Colors.white),
+        ),
+      ),
+      title: Text(name, style: TextStyle(fontWeight: FontWeight.bold)),
+      subtitle: Text(role),
     );
   }
 }

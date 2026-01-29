@@ -28,13 +28,7 @@ class _MainMenuPageState extends State<MainMenuPage> {
   void initState() {
     super.initState();
     _loadUserData();
-    Sfx.playMenuBgm(); // 🎵 START MENU MUSIC
-  }
-
-  @override
-  void dispose() {
-    Sfx.stopBgm(); // ⏹️ STOP WHEN MENU IS DESTROYED
-    super.dispose();
+    Sfx.playMenuBgm(); // START MENU MUSIC
   }
 
   void _loadUserData() async {

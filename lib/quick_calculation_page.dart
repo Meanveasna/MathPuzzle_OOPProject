@@ -192,7 +192,7 @@ class _QuickCalculationScreenState extends State<QuickCalculationScreen> with Ti
   void dispose() {
     timer?.cancel();
     Sfx.stopSfx(); // Stop any long-running sound (like timeup) immediately
-    Sfx.stopGameLoop(); // Ensure background loop context is cleared if any (legacy safety)
+    //Sfx.stopGameLoop(); // Ensure background loop context is cleared if any (legacy safety)
     super.dispose();
   }
 

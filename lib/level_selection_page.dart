@@ -10,8 +10,6 @@ import 'core/sfx.dart';
 
 import 'package:mathpuzzlesoop/l10n/app_localizations.dart';
 
-
-
 import 'main.dart'; // Import for routeObserver
 
 class LevelSelectionPage extends StatefulWidget {
@@ -49,7 +47,6 @@ class _LevelSelectionPageState extends State<LevelSelectionPage> with RouteAware
   @override
   void initState() {
     super.initState();
-    // Sfx.stopBgm(); // User requested continuous music
     _loadUserProgress();
   }
 
@@ -74,7 +71,7 @@ class _LevelSelectionPageState extends State<LevelSelectionPage> with RouteAware
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: Text(title, style: GoogleFonts.nunito(color: Colors.black, fontWeight: FontWeight.bold)),
+        title: Text(title, style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
@@ -90,7 +87,7 @@ class _LevelSelectionPageState extends State<LevelSelectionPage> with RouteAware
             padding: const EdgeInsets.all(20.0),
             child: Text(
               l10n.selectLevel,
-              style: GoogleFonts.nunito(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.black54),
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.black54),
             ),
           ),
           Expanded(

@@ -81,8 +81,6 @@ class _PlayLevelScreenState extends State<PlayLevelScreen> {
       
       Sfx.win(); // Play win sound
 
-      Sfx.win(); // Play win sound
-
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
@@ -191,7 +189,7 @@ class _PlayLevelScreenState extends State<PlayLevelScreen> {
                   return ElevatedButton(
                     child: Text(
                       '$i',
-                      style: TextStyle(fontSize: 20, color: primaryColor), // default pink number
+                      style: TextStyle(fontSize: 20,  fontWeight: FontWeight.bold, color: primaryColor), // default pink number
                     ),
                     onPressed: () => appendDigit('$i'),
                     style: ElevatedButton.styleFrom(

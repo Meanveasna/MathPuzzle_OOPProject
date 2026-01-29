@@ -276,9 +276,6 @@ class _ProfilePageState extends State<ProfilePage> {
       setState(() {
         _currentUser!.username = newName;
       });
-      // Optionally save immediately or wait for "SAVE CHANGES";
-      // User request implies immediate effect or clear "save" for next time.
-      // Saving immediately here ensures name is persisted even if avatar isn't changed.
       await PlayerRepository().updateUser(_currentUser!);
     }
   }

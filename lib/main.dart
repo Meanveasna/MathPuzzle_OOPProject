@@ -36,30 +36,39 @@ class _MyAppState extends State<MyApp> {
     });
   }
 
-  @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Math Puzzle',
-      theme: AppTheme.getTheme(_locale),
       locale: _locale,
-      localizationsDelegates: [
+      supportedLocales: const [
+        Locale('en'), // English
+        Locale('km'), // Khmer
+      ],
+      localizationsDelegates: const [
         AppLocalizations.delegate,
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      supportedLocales: [
-        const Locale('en', ''), // English
-        const Locale('km', ''), // Khmer
-      ],
+
+      // Apply the font to all text
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            textTheme: Theme.of(context).textTheme.apply(
+              fontFamily: 'GoogleSans', // your font
+            ),
+          ),
+          child: child!,
+        );
+      },
+
       initialRoute: '/first',
       routes: {
         '/first': (context) => FirstPage(),
         '/main': (context) => MainMenuPage(username: ""),
         '/settings': (context) => SettingsPage(),
       },
-      navigatorObservers: [routeObserver],
     );
   }
 }

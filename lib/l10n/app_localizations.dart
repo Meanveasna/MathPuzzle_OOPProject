@@ -505,6 +505,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Save'**
   String get save;
+
+  /// No description provided for @aboutus.
+  ///
+  /// In en, this message translates to:
+  /// **'About us'**
+  String get aboutus;
+
+  /// No description provided for @meetthedeveloper.
+  ///
+  /// In en, this message translates to:
+  /// **'Meet the developers'**
+  String get meetthedeveloper;
+
+  /// No description provided for @lang.
+  ///
+  /// In en, this message translates to:
+  /// **'Eng Soklang'**
+  String get lang;
+
+  /// No description provided for @langdecription.
+  ///
+  /// In en, this message translates to:
+  /// **'Logical puzzle'**
+  String get langdecription;
+
+  /// No description provided for @sna.
+  ///
+  /// In en, this message translates to:
+  /// **'Thuon MeanVeasna'**
+  String get sna;
+
+  /// No description provided for @snadescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Quick calculation'**
+  String get snadescription;
+
+  /// No description provided for @liz.
+  ///
+  /// In en, this message translates to:
+  /// **'Khim Phanalis'**
+  String get liz;
+
+  /// No description provided for @lizdescription.
+  ///
+  /// In en, this message translates to:
+  /// **'True/False'**
+  String get lizdescription;
+
+  /// No description provided for @g1.
+  ///
+  /// In en, this message translates to:
+  /// **'Offline math & puzzle game'**
+  String get g1;
+
+  /// No description provided for @g2.
+  ///
+  /// In en, this message translates to:
+  /// **'Focus on thinking, problem-solving, and fun learning'**
+  String get g2;
 }
 
 class _AppLocalizationsDelegate

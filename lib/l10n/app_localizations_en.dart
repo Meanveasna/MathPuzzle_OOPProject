@@ -231,4 +231,34 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get save => 'Save';
+
+  @override
+  String get aboutus => 'About us';
+
+  @override
+  String get meetthedeveloper => 'Meet the developers';
+
+  @override
+  String get lang => 'Eng Soklang';
+
+  @override
+  String get langdecription => 'Logical puzzle';
+
+  @override
+  String get sna => 'Thuon MeanVeasna';
+
+  @override
+  String get snadescription => 'Quick calculation';
+
+  @override
+  String get liz => 'Khim Phanalis';
+
+  @override
+  String get lizdescription => 'True/False';
+
+  @override
+  String get g1 => 'Offline math & puzzle game';
+
+  @override
+  String get g2 => 'Focus on thinking, problem-solving, and fun learning';
 }

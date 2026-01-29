@@ -129,5 +129,16 @@
   "editUsername": "Edit Username",
   "enterNewName": "Enter new name",
   "cancel": "Cancel",
-  "save": "Save"
+  "save": "Save",
+  "aboutus": "About us",
+  "meetthedeveloper": "Meet the developers",
+  "lang": "Eng Soklang",
+  "langdecription": "Logical puzzle",
+  "sna": "Thuon MeanVeasna",
+  "snadescription" : "Quick calculation",
+  "liz" : "Khim Phanalis",
+  "lizdescription": "True/False",
+  "g1" : "Offline math & puzzle game",
+  "g2" : "Focus on thinking, problem-solving, and fun learning"
+
 }

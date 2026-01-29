@@ -231,4 +231,34 @@ class AppLocalizationsKm extends AppLocalizations {
 
   @override
   String get save => 'រក្សាទុក';
+
+  @override
+  String get aboutus => 'អំពីពួកយើង';
+
+  @override
+  String get meetthedeveloper => 'ជួបជាមួយអ្នកបង្កើតកម្មវិធី';
+
+  @override
+  String get lang => 'អេង សុខឡាង';
+
+  @override
+  String get langdecription => 'តក្តវិទ្យា';
+
+  @override
+  String get sna => 'ធួន មានវាសនា';
+
+  @override
+  String get snadescription => 'គណិតរហ័ស';
+
+  @override
+  String get liz => 'ឃីម​ ផាណាលីស';
+
+  @override
+  String get lizdescription => 'ពិត/មិនពិត';
+
+  @override
+  String get g1 => 'ល្បែងគណិតវិទ្យាមិនប្រើអុីនធឺណេត';
+
+  @override
+  String get g2 => 'ផ្តោតលើការគិត ការដោះស្រាយបញ្ហា និងការរៀនសូត្រដ៏រីករាយ';
 }
