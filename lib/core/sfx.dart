@@ -15,28 +15,30 @@ class Sfx {
 static AudioPlayer? _gamePlayer;
 static String? _currentGame;
 
-static void enterGame(String gameId) {
-  _currentGame = gameId;
-  _gamePlayer ??= AudioPlayer();
-}
-
-static void leaveGame(String gameId) {
-  if (_currentGame == gameId) {
-    _gamePlayer?.stop();
-    _currentGame = null;
+  static void enterGame(String gameId) {
+    _currentGame = gameId;
+    _gamePlayer ??= AudioPlayer();
   }
-}
-static void pauseGameOnly() {
-  _gamePlayer?.pause();
-}
 
-static void resumeGameOnly() {
-  _gamePlayer?.resume();
-}
+  static void leaveGame(String gameId) {
+    if (_currentGame == gameId) {
+      _gamePlayer?.stop();
+      _sfxPlayer.stop(); // Stop any pending SFX when leaving game
+      _currentGame = null;
+    }
+  }
 
-static void stopGameOnly() {
-  _gamePlayer?.stop();
-}
+  static void pauseGameOnly() {
+    _gamePlayer?.pause();
+  }
+
+  static void resumeGameOnly() {
+    _gamePlayer?.resume();
+  }
+
+  static void stopGameOnly() {
+    _gamePlayer?.stop();
+  }
 
 
   static Future<void> init() async {
@@ -55,7 +57,7 @@ static void stopGameOnly() {
     if (!enabled || sfxVolume <= 0) return;
 
     try {
-      await _sfxPlayer.stop();
+      await _sfxPlayer.stop(); // Cut previous SFX
       await _sfxPlayer.setVolume(sfxVolume);
       await _sfxPlayer.play(AssetSource('sfx/$fileName'));
     } catch (_) {}
@@ -87,7 +89,7 @@ static void stopGameOnly() {
 
   static Future<void> playMenuBgm() async {
     if (!enabled || musicVolume <= 0) return;
-    if (_bgmPlaying) return; // PREVENT RESTART
+    if (_bgmPlaying) return; 
 
     try {
       _bgmPlaying = true;
@@ -108,36 +110,40 @@ static void stopGameOnly() {
     } catch (_) {}
   }
 
-  // Called when app goes background / window loses focus
-static Future<void> pauseBgmBySystem() async {
-  try {
-    await _bgmPlayer.pause();
-  } catch (_) {}
-}
+  // --- LIFECYCLE HANDLERS ---
+  
+  // Called when app goes background
+  static Future<void> pauseAll() async {
+    try {
+      if (_bgmPlaying) {
+        _bgmPausedBySystem = true;
+        await _bgmPlayer.pause();
+      }
+      // Stop short SFX so they don't resume out of context on return
+      await _sfxPlayer.stop();
+      await _gamePlayer?.pause(); 
+    } catch (_) {}
+  }
 
-static Future<void> resumeBgmBySystem() async {
-  try {
-    if (enabled && musicVolume > 0) {
-      await _bgmPlayer.resume();
-    }
-  } catch (_) {}
-}
+  // Called when app resumes
+  static Future<void> resumeBgmOnly() async {
+    try {
+      // Only resume BGM, do NOT auto-resume SFX (user must trigger game action)
+      if (enabled && musicVolume > 0 && _bgmPlaying && _bgmPausedBySystem) {
+        _bgmPausedBySystem = false;
+        await _bgmPlayer.resume();
+      }
+    } catch (_) {}
+  }
 
-static Future<void> pauseSfxBySystem() async {
-  try {
-    await _sfxPlayer.pause();
-  } catch (_) {}
-}
-
-static Future<void> resumeSfxBySystem() async {
-  try {
-    if (enabled && sfxVolume > 0) {
-      await _sfxPlayer.resume();
-    }
-  } catch (_) {}
-}
+  // Deprecated wrappers for compatibility if needed
+  static Future<void> pauseBgmBySystem() async => pauseAll();
+  static Future<void> resumeBgmBySystem() async => resumeBgmOnly();
+  static Future<void> pauseSfxBySystem() async => pauseAll(); // Safe fallback
+  static Future<void> resumeSfxBySystem() async {} // Do nothing on resume SFX globally
 
   static bool get isBgmPlaying => _bgmPlaying;
+
   // SETTINGS
   static Future<void> setBgmVolume(double volume) async {
     musicVolume = volume;

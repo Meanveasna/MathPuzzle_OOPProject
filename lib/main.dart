@@ -14,12 +14,19 @@ final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
 final List<VoidCallback> _pauseCallbacks = [];
 final List<VoidCallback> _resumeCallbacks = [];
 
-void registerPauseCallback({
+// Return a cleanup function
+void Function() registerPauseCallback({
   required VoidCallback onPause,
   required VoidCallback onResume,
 }) {
   _pauseCallbacks.add(onPause);
   _resumeCallbacks.add(onResume);
+
+  // Return a function to unregister these callbacks
+  return () {
+    _pauseCallbacks.remove(onPause);
+    _resumeCallbacks.remove(onResume);
+  };
 }
 
 void pauseAllGames() {
@@ -77,13 +84,12 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
       // Pause all sounds & timers
-      _pauseGames();
-      Sfx.pauseBgmBySystem(); // Only pause BGM
-      // Do NOT call stopSfx! short sounds are one-shot, we let page handle it
+      pauseAllGames();
+      Sfx.pauseAll(); // Pause BGM and stop SFX/Game sounds
     } else if (state == AppLifecycleState.resumed) {
       // Resume only currently active pages
-      _resumeGames();
-      Sfx.resumeBgmBySystem(); // Only resume BGM if it was playing
+      resumeAllGames();
+      Sfx.resumeBgmOnly(); // Only resume BGM if it was playing, DO NOT auto-resume SFX
     }
   }
 

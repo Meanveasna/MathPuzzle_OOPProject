@@ -17,51 +17,54 @@ class TrueFalsePage extends StatefulWidget {
 class _TrueFalsePageState extends State<TrueFalsePage> {
   static const Color kDarkPurple = Color(0xFF5B2CA0);
   static const int roundSeconds = 20;
+  final TrueFalseGameState game = TrueFalseGameState();
 
-final TrueFalseGameState game = TrueFalseGameState();
+    int timeLeft = roundSeconds;
+    bool showCongrats = false;
+    bool buttonsEnabled = true;
 
-int timeLeft = roundSeconds;
-bool showCongrats = false; // if true → show winning UI instead of game UI
-bool buttonsEnabled = true;
-bool _pausedBySystem = false;
+    bool _pausedBySystem = false;
+    bool _screenActive = false;
+    bool _wasRunningBeforePause = false;
 
-bool _screenActive = false;
-bool _wasRunningBeforePause = false;
+    Timer? timer;
+    VoidCallback? _unregisterPauseCallback;
 
+    @override
+    void initState() {
+      super.initState();
 
-Timer? timer;
+      Sfx.enterGame('true_false');
+      _screenActive = true;
 
-@override
-void initState() {
-  super.initState();
-  Sfx.enterGame('true_false');
-  _screenActive = true;
+      restartGame();
 
-  restartGame();
+      // ✅ MUST store unregister callback
+      _unregisterPauseCallback = registerPauseCallback(
+        onPause: () {
+          if (!_screenActive) return;
+          if (_pausedBySystem) return;
 
-  registerPauseCallback(
-    onPause: () {
-      if (!_screenActive) return;
+          _pausedBySystem = true;
+          _wasRunningBeforePause = timer != null;
 
-      _pausedBySystem = true;
-      _wasRunningBeforePause = timer != null;
+          stopTimer();
+          Sfx.pauseGameOnly(); // true/false ONLY
+        },
+        onResume: () {
+          if (!_screenActive) return;
+          if (!_pausedBySystem) return;
 
-      stopTimer();
-      Sfx.pauseGameOnly(); // ⬅ true/false ONLY
-    },
-    onResume: () {
-      if (!_screenActive) return;
-      if (!_pausedBySystem) return;
+          _pausedBySystem = false;
 
-      _pausedBySystem = false;
+          if (_wasRunningBeforePause && !showCongrats) {
+            startTimer();
+            Sfx.resumeGameOnly(); // true/false ONLY
+          }
+        },
+      );
+    }
 
-      if (_wasRunningBeforePause && !showCongrats) {
-        startTimer();
-        Sfx.resumeGameOnly(); // ⬅ true/false ONLY
-      }
-    },
-  );
-}
 
 
 @override
@@ -70,6 +73,8 @@ void dispose() {
   _screenActive = false;
 
   stopTimer();
+  _unregisterPauseCallback?.call();
+  _unregisterPauseCallback = null; // Unregister
   Sfx.stopGameOnly(); // ⬅ stop sounds for this screen only
 
   super.dispose();
@@ -144,13 +149,17 @@ void startTimer() {
   stopTimer(); // ensure single timer
 
   timer = Timer.periodic(const Duration(seconds: 1), (t) {
-    if (!mounted || showCongrats || _pausedBySystem) {
+    // 🔒 HARD GUARD (this is the fix)
+    if (!_screenActive || !mounted || showCongrats || _pausedBySystem) {
       t.cancel();
+      timer = null;
       return;
     }
 
     if (timeLeft <= 1) {
       t.cancel();
+      timer = null;
+
       setState(() => timeLeft = 0);
       timeUp();
     } else {
@@ -161,6 +170,7 @@ void startTimer() {
     }
   });
 }
+
 
 void stopTimer() {
   timer?.cancel();

@@ -56,37 +56,51 @@ class _QuickCalculationScreenState extends State<QuickCalculationScreen>
 
   // 🔒 System pause flag (NEW – does not affect your logic)
   bool _pausedBySystem = false;
+  bool _screenActive = false;
+  VoidCallback? _unregisterPauseCallback;
 
   @override
   void initState() {
     super.initState();
+
+    _screenActive = true;
+
     game = QuickCalculationGame(widget.initialLevel);
     game.start();
-    secondsLeft = 10;
 
-    // ▶️ Start game timer
+    secondsLeft = 10;
     startTimer();
 
-    // 🔌 Register app-level pause / resume (ADDED)
-    registerPauseCallback(
+    // ✅ CORRECT global pause registration
+    _unregisterPauseCallback = registerPauseCallback(
       onPause: () {
+        if (!_screenActive) return;
+        if (_pausedBySystem) return;
+
         _pausedBySystem = true;
-        timer?.cancel(); // hard stop timer
+        timer?.cancel();
+        timer = null;
       },
       onResume: () {
-        if (_pausedBySystem && !isPaused && !showResult) {
-          _pausedBySystem = false;
-          startTimer(); // resume SAME timer safely
+        if (!_screenActive) return;
+        if (!_pausedBySystem) return;
+
+        _pausedBySystem = false;
+
+        // Resume ONLY if game is still running
+        if (!isPaused && !showResult) {
+          startTimer();
         }
       },
     );
   }
 
+
   void startTimer() {
     timer?.cancel(); // stop any existing timer
 
     timer = Timer.periodic(const Duration(seconds: 1), (t) {
-      if (!mounted || isPaused || _pausedBySystem) return;
+      if (_pausedBySystem || !_screenActive) return;
 
       if (secondsLeft == 3) {
         Sfx.playTick();
@@ -98,6 +112,7 @@ class _QuickCalculationScreenState extends State<QuickCalculationScreen>
 
       if (secondsLeft <= 0) {
         t.cancel();
+        timer = null;
         Sfx.die();
         processAnswer(null); // Timeout
       }
@@ -215,8 +230,15 @@ class _QuickCalculationScreenState extends State<QuickCalculationScreen>
 
   @override
   void dispose() {
+    _screenActive = false;
+
     timer?.cancel();
-    // ❗ DO NOT stop global sound here
+    timer = null;
+
+    // ✅ VERY IMPORTANT: unregister callback
+    _unregisterPauseCallback?.call();
+    _unregisterPauseCallback = null;
+
     super.dispose();
   }
 
