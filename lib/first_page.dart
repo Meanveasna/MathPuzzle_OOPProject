@@ -112,7 +112,8 @@ class _FirstPageState extends State<FirstPage>
       },
       borderRadius: BorderRadius.circular(20),
       child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+        alignment: Alignment.center,
+        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         decoration: BoxDecoration(
           color: isSelected ? AppTheme.primaryColor : Colors.transparent,
           borderRadius: BorderRadius.circular(20),
@@ -120,6 +121,10 @@ class _FirstPageState extends State<FirstPage>
         ),
         child: Text(
           label,
+          maxLines: 1,              
+          softWrap: false,         
+          overflow: TextOverflow.visible,
+          textAlign: TextAlign.center,
           style: TextStyle(
              color: isSelected ? Colors.white : Colors.black87,
              fontWeight: FontWeight.bold,
@@ -172,13 +177,18 @@ class _FirstPageState extends State<FirstPage>
                       SizedBox(height: 40),
                       // Language Switcher Toggle
                       Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          _buildLanguageToggle(context, 'US English', const Locale('en')),
-                          SizedBox(width: 20),
-                          _buildLanguageToggle(context, 'KH ខ្មែរ', const Locale('km')),
+                          const SizedBox(width: 5),
+                          Expanded(
+                            child: _buildLanguageToggle(context, 'US English', const Locale('en')),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: _buildLanguageToggle(context, 'KH ភាសាខ្មែរ', const Locale('km')),
+                          ),
                         ],
                       ),
+
                       SizedBox(height: 40),
                       TextField(
                         controller: _usernameController,

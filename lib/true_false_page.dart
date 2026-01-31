@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:mathpuzzlesoop/games/true_false_game.dart';
-import 'package:mathpuzzlesoop/core/sfx.dart';
-
-import 'package:mathpuzzlesoop/l10n/app_localizations.dart';
+import 'package:mathpuzzles/games/true_false_game.dart';
+import 'package:mathpuzzles/core/sfx.dart';
+import 'package:mathpuzzles/main.dart';
+import 'package:mathpuzzles/l10n/app_localizations.dart';
 
 class TrueFalsePage extends StatefulWidget {
   final String? username;
@@ -18,114 +18,160 @@ class _TrueFalsePageState extends State<TrueFalsePage> {
   static const Color kDarkPurple = Color(0xFF5B2CA0);
   static const int roundSeconds = 20;
 
-  final TrueFalseGameState game = TrueFalseGameState();
+final TrueFalseGameState game = TrueFalseGameState();
 
-  int timeLeft = roundSeconds;
-  bool showCongrats = false; //if true → show winning UI instead of game UI
-  bool buttonsEnabled = true;
+int timeLeft = roundSeconds;
+bool showCongrats = false; // if true → show winning UI instead of game UI
+bool buttonsEnabled = true;
+bool _pausedBySystem = false;
 
-  Timer? timer;
+bool _screenActive = false;
+bool _wasRunningBeforePause = false;
 
-  @override
-  void initState() {
-    super.initState();
+
+Timer? timer;
+
+@override
+void initState() {
+  super.initState();
+  Sfx.enterGame('true_false');
+  _screenActive = true;
+
+  restartGame();
+
+  registerPauseCallback(
+    onPause: () {
+      if (!_screenActive) return;
+
+      _pausedBySystem = true;
+      _wasRunningBeforePause = timer != null;
+
+      stopTimer();
+      Sfx.pauseGameOnly(); // ⬅ true/false ONLY
+    },
+    onResume: () {
+      if (!_screenActive) return;
+      if (!_pausedBySystem) return;
+
+      _pausedBySystem = false;
+
+      if (_wasRunningBeforePause && !showCongrats) {
+        startTimer();
+        Sfx.resumeGameOnly(); // ⬅ true/false ONLY
+      }
+    },
+  );
+}
+
+
+@override
+void dispose() {
+  Sfx.leaveGame('true_false');
+  _screenActive = false;
+
+  stopTimer();
+  Sfx.stopGameOnly(); // ⬅ stop sounds for this screen only
+
+  super.dispose();
+}
+
+
+void restartGame() {
+  stopTimer();
+  setState(() {
+    showCongrats = false;
+    buttonsEnabled = true;
+    timeLeft = roundSeconds;
+    game.reset();
+  });
+
+  if (!_pausedBySystem) {
+    startTimer();
+  }
+}
+
+void loadNextStatement() {
+  stopTimer();
+  setState(() {
+    timeLeft = roundSeconds;
+    buttonsEnabled = true;
+    game.nextQuestion();
+  });
+
+  if (!_pausedBySystem) {
+    startTimer();
+  }
+}
+
+void submitAnswer(bool playerSaysTrue) {
+  if (!buttonsEnabled || showCongrats) return;
+
+  stopTimer();
+  setState(() => buttonsEnabled = false);
+
+  final bool correct = (playerSaysTrue == game.current.isTrue);
+  game.answer(playerSaysTrue);
+
+  if (correct) {
     Sfx.correct();
-    restartGame();
+  } else {
+    Sfx.wrong();
   }
 
-  @override
-  void dispose() {
-    stopTimer();
-    Sfx.stopSfx();
-    super.dispose();
+  if (game.reachedTarget()) {
+    Sfx.win();
+    setState(() => showCongrats = true);
+  } else {
+    loadNextStatement();
   }
+}
 
-  void restartGame() {
-    stopTimer();
-    setState(() {
-      showCongrats = false;
-      buttonsEnabled = true;
-      timeLeft = roundSeconds;
-      game.reset();
-    });
-    startTimer();
+void timeUp() {
+  if (_pausedBySystem) return; // block background timeout
+
+  Sfx.die();
+  game.timeout();
+
+  if (game.reachedTarget()) {
+    Sfx.win();
+    setState(() => showCongrats = true);
+  } else {
+    loadNextStatement();
   }
+}
 
-  void loadNextStatement() {
-    stopTimer();
-    setState(() {
-      timeLeft = roundSeconds;
-      buttonsEnabled = true;
-      game.nextQuestion();
-    });
-    startTimer();
-  }
+void startTimer() {
+  stopTimer(); // ensure single timer
 
-  void submitAnswer(bool playerSaysTrue) {
-    if (!buttonsEnabled || showCongrats) return;
-
-    stopTimer();
-    setState(() => buttonsEnabled = false);
-
-    final bool correct = (playerSaysTrue == game.current.isTrue);
-
-    game.answer(playerSaysTrue);
-
-    if (correct) {
-      Sfx.correct();
-    } else {
-      Sfx.wrong();
+  timer = Timer.periodic(const Duration(seconds: 1), (t) {
+    if (!mounted || showCongrats || _pausedBySystem) {
+      t.cancel();
+      return;
     }
 
-    if (game.reachedTarget()) {
-      Sfx.win();
-      setState(() => showCongrats = true);
+    if (timeLeft <= 1) {
+      t.cancel();
+      setState(() => timeLeft = 0);
+      timeUp();
     } else {
-      loadNextStatement();
-    }
-  }
-
-  void timeUp() {
-    Sfx.die();
-    game.timeout();
-    if (game.reachedTarget()) {
-      Sfx.win();
-      setState(() => showCongrats = true);
-    } else {
-      loadNextStatement();
-    }
-  }
-
-  void startTimer() {
-    timer = Timer.periodic(const Duration(seconds: 1), (t) {
-      if (!mounted || showCongrats) {
-        t.cancel();
-        return;
+      if (timeLeft % 2 == 0) {
+        Sfx.playTick();
       }
+      setState(() => timeLeft -= 1);
+    }
+  });
+}
 
-      if (timeLeft <= 1) {
-        t.cancel();
-        setState(() => timeLeft = 0);
-        timeUp();
-      } else {
-        if (timeLeft % 2 == 0) {
-          Sfx.playTick();
-        }
-        setState(() => timeLeft -= 1);
-      }
-    });
-  }
+void stopTimer() {
+  timer?.cancel();
+  timer = null;
+}
 
-  void stopTimer() {
-    timer?.cancel();
-    timer = null;
-  }
-
-  Color _timerColor() {
-    if (timeLeft <= 5) return Colors.red;
-    if (timeLeft <= 10) return Colors.orange;
-    return Colors.green;
-  }
+Color _timerColor() {
+  if (timeLeft <= 5) return Colors.red;
+  if (timeLeft <= 10) return Colors.orange;
+  return Colors.green;
+}
 
   @override
   Widget build(BuildContext context) {

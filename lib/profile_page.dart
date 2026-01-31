@@ -120,7 +120,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 style: TextStyle(fontSize: 60),
               ),
             ),
-            SizedBox(height: 20),
+            SizedBox(height: 5),
 
             // Username with Edit Button
             Row(
@@ -143,7 +143,7 @@ class _ProfilePageState extends State<ProfilePage> {
               ],
             ),
 
-            SizedBox(height: 10),
+            SizedBox(height: 5),
             Container(
               padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               decoration: BoxDecoration(
@@ -161,7 +161,7 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
             ),
 
-            SizedBox(height: 40),
+            SizedBox(height: 15),
             Text(
               l10n.chooseAvatar,
               style: TextStyle(
@@ -170,7 +170,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 color: Colors.grey[700],
               ),
             ),
-            SizedBox(height: 15),
+            SizedBox(height: 8),
 
             // Avatar Selector Grid
             Container(

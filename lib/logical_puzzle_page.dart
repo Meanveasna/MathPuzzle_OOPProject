@@ -5,7 +5,8 @@ import 'level_selection_page.dart';
 import 'player_storage.dart';
 import 'models/user_model.dart';
 import 'core/sfx.dart';
-import 'package:mathpuzzlesoop/l10n/app_localizations.dart';
+import 'package:mathpuzzles/main.dart';
+import 'package:mathpuzzles/l10n/app_localizations.dart';
 
 final LogicalPuzzleGame game = LogicalPuzzleGame();
 
@@ -31,7 +32,7 @@ class LogicalPuzzlePage extends StatelessWidget {
 class PlayLevelScreen extends StatefulWidget {
   final int levelIndex;
   final String username;
-
+  
   const PlayLevelScreen({
     super.key,
     required this.levelIndex,
@@ -47,7 +48,32 @@ const Color primaryColor = Color(0xFFFF8FA3);         // default Flutter pink
 
 class _PlayLevelScreenState extends State<PlayLevelScreen> {
   final TextEditingController controller = TextEditingController();
+
+  bool _pausedBySystem = false;
   String message = '';
+  @override
+void initState() {
+  super.initState();
+
+  // Register system pause / resume
+  registerPauseCallback(
+    onPause: () {
+      _pausedBySystem = true;
+      Sfx.stopSfx();
+    },
+    onResume: () {
+      _pausedBySystem = false;
+    },
+  );
+}
+
+@override
+void dispose() {
+  // Safety: stop any pending short sound
+  Sfx.stopSfx();
+  super.dispose();
+}
+
 
   void appendDigit(String digit) {
     if (controller.text.length >= 5) return;
@@ -114,110 +140,104 @@ class _PlayLevelScreenState extends State<PlayLevelScreen> {
             },
           ),
         ),
-        body: Padding(
-          padding: EdgeInsets.all(16),
-          child: Column(
-            children: [
-              // Display question as it is (no box)
-              Expanded(
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    return SingleChildScrollView(
-                      child: ConstrainedBox(
-                        constraints: BoxConstraints(
-                          minHeight: constraints.maxHeight,
-                        ),
-                        child: Center(
-                          child: Padding(
-                            padding: const EdgeInsets.all(16.0),
-                            child: game.questions[widget.levelIndex],
-                          ),
-                        ),
-                      ),
-                    );
-                  },
+      body: Padding(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          children: [
+            // Display question in a fixed scrollable area
+            SizedBox(
+              height: MediaQuery.of(context).size.height * 0.39, // fixed height for question
+              child: SingleChildScrollView(
+                child: Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(12.0),
+                    child: game.questions[widget.levelIndex],
+                  ),
                 ),
               ),
+            ),
 
-              SizedBox(height: 20),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: controller,
-                      readOnly: true,
-                      decoration: InputDecoration(
-                        border: OutlineInputBorder(
-                          borderSide: BorderSide(color: primaryColor, width: 0.5),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderSide: BorderSide(color: primaryColor, width: 0.5),
-                        ),
-                        hintText: l10n.enterAnswer,
-                        //hintStyle: TextStyle(color: primaryColor),
-                        errorText: message.isEmpty ? null : message,
+            SizedBox(height: 15),
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: controller,
+                    readOnly: true,
+                    decoration: InputDecoration(
+                      border: OutlineInputBorder(
+                        borderSide: BorderSide(color: primaryColor, width: 0.5),
                       ),
-                      //style: TextStyle(color: primaryColor),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: primaryColor, width: 0.5),
+                      ),
+                      hintText: l10n.enterAnswer,
+                      errorText: message.isEmpty ? ' ' : message, // reserve 1 space if empty
+                      errorStyle: TextStyle(height: 0.8), // make it smaller so it doesn’t push much
+                    ),
+
+                  ),
+                ),
+                SizedBox(width: 10),
+                ElevatedButton(
+                  child: Text(
+                    '×',
+                    style: TextStyle(fontSize: 20, color: Colors.black),
+                  ),
+                  onPressed: deleteDigit,
+                  style: ElevatedButton.styleFrom(
+                    side: BorderSide(color: primaryColor, width: 0.5),
+                    minimumSize: Size(60, 60),
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 10),
+            GridView.builder(
+              shrinkWrap: true,
+              physics: NeverScrollableScrollPhysics(),
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 5,
+                mainAxisSpacing: 12,
+                crossAxisSpacing: 12,
+              ),
+              itemCount: 10,
+              itemBuilder: (context, i) {
+                return ElevatedButton(
+                  child: Text(
+                    '$i',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: primaryColor,
                     ),
                   ),
-                  SizedBox(width: 10),
-                  ElevatedButton(
-                    child: Text(
-                      '×',
-                      style: TextStyle(fontSize: 20, color: Colors.black),
-                    ),
-                    onPressed: deleteDigit,
-                    style: ElevatedButton.styleFrom(
-                      //backgroundColor: Colors.white, // white background
-                      side: BorderSide(color: primaryColor, width: 0.5), // pink border
-                      minimumSize: Size(60, 60),
-                    ),
+                  onPressed: () => appendDigit('$i'),
+                  style: ElevatedButton.styleFrom(
+                    side: BorderSide(color: primaryColor, width: 0.5),
+                    minimumSize: Size(60, 60),
                   ),
-                ],
+                );
+              },
+            ),
+            SizedBox(height: 5),
+            ElevatedButton(
+              child: Text(
+                l10n.submit,
+                style: TextStyle(fontSize: 20, color: Colors.black),
               ),
-              SizedBox(height: 10),
-              GridView.builder(
-                shrinkWrap: true,
-                physics: NeverScrollableScrollPhysics(),
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 5,
-                  mainAxisSpacing: 12,
-                  crossAxisSpacing: 12,
-                ),
-                itemCount: 10,
-                itemBuilder: (context, i) {
-                  return ElevatedButton(
-                    child: Text(
-                      '$i',
-                      style: TextStyle(fontSize: 20,  fontWeight: FontWeight.bold, color: primaryColor), // default pink number
-                    ),
-                    onPressed: () => appendDigit('$i'),
-                    style: ElevatedButton.styleFrom(
-                      //backgroundColor: Colors.white, // white box
-                      side: BorderSide(color: primaryColor, width: 0.5), // pink border
-                      minimumSize: Size(60, 60),
-                    ),
-                  );
-                },
+              onPressed: () => checkAnswer(l10n),
+              style: ElevatedButton.styleFrom(
+                side: BorderSide(color: primaryColor, width: 0.5),
+                minimumSize: Size(double.infinity, 50),
               ),
-              SizedBox(height: 10),
-              ElevatedButton(
-                child: Text(
-                  l10n.submit,
-                  style: TextStyle(fontSize: 20, color: Colors.black),
-                ),
-                onPressed: () => checkAnswer(l10n),
-                style: ElevatedButton.styleFrom(
-                  //backgroundColor: Colors.white, // white background
-                  side: BorderSide(color: primaryColor, width: 0.5), // pink border
-                  minimumSize: Size(double.infinity, 50),
-                ),
-              ),
-            ],
+            ),
+          ],
         ),
       ),
+
     );
-  }
+  } 
 }
 
 class CongratsScreen extends StatelessWidget {

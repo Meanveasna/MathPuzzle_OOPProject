@@ -9,6 +9,36 @@ class Sfx {
   static double musicVolume = 0.5;
   static double sfxVolume = 0.5;
 
+  static bool _bgmPlaying = false;
+  static bool _bgmPausedBySystem = false;
+
+static AudioPlayer? _gamePlayer;
+static String? _currentGame;
+
+static void enterGame(String gameId) {
+  _currentGame = gameId;
+  _gamePlayer ??= AudioPlayer();
+}
+
+static void leaveGame(String gameId) {
+  if (_currentGame == gameId) {
+    _gamePlayer?.stop();
+    _currentGame = null;
+  }
+}
+static void pauseGameOnly() {
+  _gamePlayer?.pause();
+}
+
+static void resumeGameOnly() {
+  _gamePlayer?.resume();
+}
+
+static void stopGameOnly() {
+  _gamePlayer?.stop();
+}
+
+
   static Future<void> init() async {
     final prefs = await SharedPreferences.getInstance();
     musicVolume = prefs.getDouble('musicVolume') ?? 0.5;
@@ -35,7 +65,6 @@ class Sfx {
   static Future<void> wrong() => _playSfx('wrong.mp3');
   static Future<void> timeUp() => _playSfx('timeup.mp3');
   static Future<void> win() => _playSfx('win.mp3');
-  static Future<void> click() => _playSfx('click.mp3');
   static Future<void> playTick() => _playSfx('timeup.mp3');
   static Future<void> win2() => _playSfx('win2.mp3');
   static Future<void> die() => _playSfx('die.mp3');
@@ -58,8 +87,12 @@ class Sfx {
 
   static Future<void> playMenuBgm() async {
     if (!enabled || musicVolume <= 0) return;
+    if (_bgmPlaying) return; // PREVENT RESTART
 
     try {
+      _bgmPlaying = true;
+      _bgmPausedBySystem = false;
+
       await _bgmPlayer.stop();
       await _bgmPlayer.setVolume(musicVolume);
       await _bgmPlayer.play(AssetSource('sfx/menu_bg.mp3'));
@@ -67,11 +100,45 @@ class Sfx {
   }
 
   static Future<void> stopBgm() async {
+    if (!_bgmPlaying) return;
+
     try {
+      _bgmPlaying = false;
       await _bgmPlayer.stop();
     } catch (_) {}
   }
 
+  // Called when app goes background / window loses focus
+static Future<void> pauseBgmBySystem() async {
+  try {
+    await _bgmPlayer.pause();
+  } catch (_) {}
+}
+
+static Future<void> resumeBgmBySystem() async {
+  try {
+    if (enabled && musicVolume > 0) {
+      await _bgmPlayer.resume();
+    }
+  } catch (_) {}
+}
+
+static Future<void> pauseSfxBySystem() async {
+  try {
+    await _sfxPlayer.pause();
+  } catch (_) {}
+}
+
+static Future<void> resumeSfxBySystem() async {
+  try {
+    if (enabled && sfxVolume > 0) {
+      await _sfxPlayer.resume();
+    }
+  } catch (_) {}
+}
+
+  static bool get isBgmPlaying => _bgmPlaying;
+  // SETTINGS
   static Future<void> setBgmVolume(double volume) async {
     musicVolume = volume;
     await _bgmPlayer.setVolume(volume);
@@ -93,10 +160,5 @@ class Sfx {
       await _sfxPlayer.stop();
     } catch (_) {}
   }
-
-  // static Future<void> stopGameLoop() async {
-  //   try {
-  //     await _bgmPlayer.stop();
-  //   } catch (_) {}
-  // }
+  
 }

@@ -8,7 +8,7 @@ import 'models/user_model.dart';
 import 'main_menu_page.dart';
 import 'core/sfx.dart';
 
-import 'package:mathpuzzlesoop/l10n/app_localizations.dart';
+import 'package:mathpuzzles/l10n/app_localizations.dart';
 
 import 'main.dart'; // Import for routeObserver
 

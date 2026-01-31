@@ -8,6 +8,8 @@ import 'player_storage.dart';
 import 'main.dart'; // For MyApp
 import 'core/sfx.dart';
 import 'l10n/app_localizations.dart';
+import 'package:url_launcher/url_launcher.dart';
+
 
 class SettingsPage extends StatefulWidget {
   @override
@@ -128,6 +130,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
                 if (confirm == true) {
                   await PlayerRepository().resetAll();
+                  Sfx.stopBgm();
                   Navigator.of(context).pushAndRemoveUntil(
                     MaterialPageRoute(builder: (_) => FirstPage()),
                     (_) => false,
@@ -173,13 +176,73 @@ class _SettingsPageState extends State<SettingsPage> {
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
-                              SizedBox(height: 20),
+                              SizedBox(height: 5),
                               _buildDeveloperTile(
                                   l10n.lang, l10n.langdecription),
                              _buildDeveloperTile(l10n.sna, l10n.snadescription),
                               _buildDeveloperTile(l10n.liz, l10n.lizdescription),
                               Text(l10n.g1),
                               Text(l10n.g2),
+                              
+                              SizedBox(height: 30),
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.phone,
+                                    size: 18,
+                                    color: Colors.grey[700],
+                                  ),
+                                  SizedBox(width: 6),
+                                    Text(
+                                      '+855 96 81 96 665',
+                                      style: TextStyle(
+                                        color: Colors.blue,
+                                        decoration: TextDecoration.underline,
+                                      ),
+                                    ),
+                                ],
+                              ),
+
+                              SizedBox(height: 8),
+
+                              // Email link
+                              InkWell(
+                                onTap: () async {
+                                  final Uri emailUri = Uri(
+                                    scheme: 'mailto',
+                                    path: 'engsoklang325@email.com',
+                                    queryParameters: {
+                                      'subject': 'Support Request',
+                                    },
+                                  );
+
+                                  if (await canLaunchUrl(emailUri)) {
+                                    await launchUrl(
+                                      emailUri,
+                                      mode: LaunchMode.externalApplication,
+                                    );
+                                  } else {
+                                    debugPrint('Could not launch email app');
+                                  }
+                                },
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.email, size: 18),
+                                    SizedBox(width: 6),
+                                    Text(
+                                      'engsoklang325@email.com',
+                                      style: TextStyle(
+                                        color: Colors.blue,
+                                        decoration: TextDecoration.underline,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+
+
+                              SizedBox(height: 10),
                             ],
                           ),
                         ),

@@ -261,4 +261,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get g2 => 'Focus on thinking, problem-solving, and fun learning';
+
+  @override
+  String get paused => 'Paused';
+
+  @override
+  String get resume => 'Resume';
+
+  @override
+  String get home => 'Home';
 }

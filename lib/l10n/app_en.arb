@@ -139,6 +139,9 @@
   "liz" : "Khim Phanalis",
   "lizdescription": "True/False",
   "g1" : "Offline math & puzzle game",
-  "g2" : "Focus on thinking, problem-solving, and fun learning"
+  "g2" : "Focus on thinking, problem-solving, and fun learning",
+  "paused": "Paused",
+  "resume": "Resume",
+  "home": "Home"
 
 }

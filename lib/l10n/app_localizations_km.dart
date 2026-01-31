@@ -261,4 +261,13 @@ class AppLocalizationsKm extends AppLocalizations {
 
   @override
   String get g2 => 'ផ្តោតលើការគិត ការដោះស្រាយបញ្ហា និងការរៀនសូត្រដ៏រីករាយ';
+
+  @override
+  String get paused => 'ផ្អាក';
+
+  @override
+  String get resume => 'បន្ត';
+
+  @override
+  String get home => 'ទំព័រដើម';
 }
